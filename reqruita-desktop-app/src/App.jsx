@@ -24,3 +24,33 @@ const USERS = [
     password: "8d3#223",
   },
 ];
+
+//keep "id" as email for now to avoid heavy changes in Login.jsx
+
+function onLogin({ id, meetingId, password, role: roleFromLogin }) {
+  const email = (id || "").trim().toLowerCase();
+  const mId = (meetingId || "").trim();
+  const currentRole = roleFromLogin || role;
+
+  const found = users.find(
+    (u) =>
+      u.role === currentRole &&
+      u.email.toLowerCase() === email &&
+      u.meetingId === mId &&
+      u.password === password
+  );
+
+  if (!found) {
+    return { ok: false, error: "Invalid Email, Meeting ID, or Password." };
+  }
+
+  setSession({
+    role: found.role,
+    email: found.email,
+    meetingId: found.meetingId,
+  });
+
+  setStep("devices");
+  return { ok: true };
+}
+

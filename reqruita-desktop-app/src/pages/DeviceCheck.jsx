@@ -180,3 +180,26 @@ export default function DeviceCheck({ role, onReady, onBack }) {
         </div>
     );
 }
+
+function stopStream(stream) {
+    if (!stream) return;
+    for (const track of stream.getTracks()) track.stop();
+}
+
+function Preview({ title, ready, children }) {
+    return (
+        <div className="dc-preview">
+            <div className="dc-preview-head">
+                <div className="dc-preview-title">{title}</div>
+                <div className="dc-status">
+                    <span className={`dc-dot ${ready ? "dc-dot-on" : ""}`} />
+                    {ready ? "READY" : "OFF"}
+                </div>
+            </div>
+
+            <div className="dc-body">
+                {children}
+            </div>
+        </div>
+    );
+}

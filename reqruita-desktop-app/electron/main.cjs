@@ -82,3 +82,37 @@ function setupInterviewModeIPC() {
         // win.setClosable(true);
     });
 }
+
+//Dev safety: emergency unlock shortcut so you never get stuck in kiosk mode.
+//Ctrl+Shift+U -> exit interview mode
+
+function setupEmergencyUnlockShortcut() {
+    globalShortcut.register("Control+Shift+U", () => {
+        if (!win) return;
+        win.setAlwaysOnTop(false);
+        win.setKiosk(false);
+        win.setFullScreen(false);
+        win.setResizable(true);
+        win.setMinimizable(true);
+        // win.setClosable(true);
+    });
+}
+
+app.whenReady().then(() => {
+    setupDisplayMediaHandler();
+    createWindow();
+    setupInterviewModeIPC();
+    setupEmergencyUnlockShortcut();
+
+    app.on("activate", () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+});
+
+app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
+});
+
+app.on("will-quit", () => {
+    globalShortcut.unregisterAll();
+});

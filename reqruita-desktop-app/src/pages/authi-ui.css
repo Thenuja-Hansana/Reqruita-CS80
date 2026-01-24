@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+
+:root{
+  --rq-primary: #4b2fb6;
+  --rq-primary-hover: #3f27a0;
+  --rq-border: #e6e6e6;
+  --rq-text: #111827;
+  --rq-muted: #6b7280;
+
+  /* space between UI and window edges */
+  --rq-safe: 20px;
+}
+
+/* Electron-safe sizing */
+html, body, #root{
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  background: #ffffff;
+  font-family: "Lexend", sans-serif;
+}
+
+*{ box-sizing: border-box; }
+
+/* Disable scroll for these screens (we apply class in components) */
+body.rq-noscr{
+  overflow: hidden;
+}
+
+/* ================= Role Select ================= */
+.rs-shell{
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  overflow: hidden;
+  padding: var(--rq-safe);
+  gap: var(--rq-safe);
+}
+
+/* Left image */
+.rs-left{
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  min-height: 0; /* critical: prevents grid overflow */
+}
+
+.rs-left::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(75,47,182,0.55);
+}
+
+.rs-left-content{
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(18px, 3.5vh, 40px);
+}
+
+.rs-welcome{
+  margin: 0;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  line-height: 0.95;
+
+  /* auto-shrinks with window height */
+  font-size: clamp(28px, 5.2vh, 56px);
+}
+
+/* Right panel */
+.rs-right{
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.rs-panel{
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  padding: 10px;
+}
+
+.rs-logo{
+  width: 78px;
+  height: 78px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+}
+
+.rs-btn{
+  width: 100%;
+  height: 42px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--rq-border);
+  background: #fff;
+  color: var(--rq-text);
+  transition: 150ms ease;
+}
+
+.rs-btn-primary{
+  background: var(--rq-primary);
+  border-color: var(--rq-primary);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(75,47,182,0.22);
+}
+
+.rs-btn-primary:hover{ background: var(--rq-primary-hover); }
+.rs-btn:hover{ transform: translateY(-1px); }
+.rs-btn:active{ transform: translateY(0px); }
+
+.rs-or{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  color: var(--rq-muted);
+  font-size: 12px;
+}
+.rs-or::before,
+.rs-or::after{
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: #dedede;
+}
+
+/* ✅ If the WINDOW is short, switch to vertical layout (more height-friendly) */
+@media (max-height: 640px){
+  .rs-shell{
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+  .rs-left{ min-height: 220px; }
+  .rs-panel{ max-width: 420px; }
+}
+
+/* Also stack on narrow screens */
+@media (max-width: 860px){
+  .rs-shell{
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+  .rs-left{ min-height: 260px; }
+}

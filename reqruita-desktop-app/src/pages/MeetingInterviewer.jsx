@@ -157,3 +157,263 @@ export default function MeetingInterviewer({ session, onEnd }) {
         setMessages((m) => [...m, { id: Date.now(), who: "me", name: "You", text, time }]);
         setChatInput("");
     }
+
+    return (
+        <div className="mt-wrap">
+            {error && <div className="mt-err">{error}</div>}
+
+            {/* Stage + Right Panel */}
+            <div className={`mt-mainrow ${panel ? "withSide" : ""}`}>
+                {/* Main Stage */}
+                <div className="mt-stage">
+                    {/* Main shared screen placeholder */}
+                    <div className="mt-share">
+                        <div className="mt-share-placeholder">
+                            Interviewee screen share (placeholder)
+                            <div style={{ marginTop: 8, fontWeight: 700, opacity: 0.8, fontSize: 12 }}>
+                                Meeting: {session?.meetingId || "—"}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Interviewee cam tile (bottom-left) */}
+                    <div className="mt-tile mt-tile-peer">
+                        <div
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                background:
+                                    "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
+                                display: "grid",
+                                placeItems: "center",
+                                color: "rgba(255,255,255,0.9)",
+                                fontWeight: 900,
+                                fontSize: 12,
+                            }}
+                        >
+                            Interviewee video
+                        </div>
+                        <div className="mt-tile-label">Interviewee</div>
+                    </div>
+
+                    {/* Interviewer tile (bottom-right) */}
+                    <div className="mt-tile mt-tile-self">
+                        <video ref={videoRef} autoPlay playsInline muted />
+                        <div className="mt-tile-label">You (Interviewer)</div>
+                    </div>
+                </div>
+
+                {/* Right Panel */}
+                {panel && (
+                    <aside className="mt-side">
+                        <div className="mt-side-head">
+                            <div className="mt-side-title">
+                                {panel === "participants" ? "Participants" : panel === "chat" ? "Chat" : "Notes"}
+                            </div>
+                            <button className="mt-side-close" onClick={() => setPanel(null)}>
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="mt-side-body" style={{ padding: panel === "chat" ? 0 : undefined }}>
+                            {/* Participants */}
+                            {panel === "participants" && (
+                                <>
+                                    <div className="mt-sec-title">Interviewing</div>
+                                    <div className="mt-card">
+                                        {interviewing.map((p) => (
+                                            <ParticipantRow
+                                                key={p.id}
+                                                name={p.name}
+                                                actions={
+                                                    <div className="mt-actions">
+                                                        <button className="mt-act mt-act-gray" title="More">
+                                                            ⋮
+                                                        </button>
+                                                    </div>
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-sec-title" style={{ marginTop: 14 }}>
+                                        Waiting
+                                    </div>
+                                    <div className="mt-card">
+                                        {waiting.map((p) => (
+                                            <ParticipantRow
+                                                key={p.id}
+                                                name={p.name}
+                                                actions={
+                                                    <div className="mt-actions">
+                                                        <button
+                                                            className="mt-act mt-act-red"
+                                                            title="Remove"
+                                                            onClick={() => rejectCandidate(p.id)}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                        <button
+                                                            className="mt-act mt-act-blue"
+                                                            title="Admit"
+                                                            onClick={() => acceptCandidate(p.id)}
+                                                        >
+                                                            ✓
+                                                        </button>
+                                                        <button className="mt-act mt-act-gray" title="More">
+                                                            ⋮
+                                                        </button>
+                                                    </div>
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-sec-title" style={{ marginTop: 14 }}>
+                                        Completed Participants
+                                    </div>
+                                    <div className="mt-card">
+                                        {completed.map((p) => (
+                                            <ParticipantRow
+                                                key={p.id}
+                                                name={p.name}
+                                                actions={
+                                                    <div className="mt-actions">
+                                                        <button className="mt-act mt-act-blue" title="Details">
+                                                            ⋮
+                                                        </button>
+                                                    </div>
+                                                }
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Chat */}
+                            {panel === "chat" && (
+                                <div className="mt-chat">
+                                    <div className="mt-chat-list">
+                                        {messages.map((m) => (
+                                            <div key={m.id} className={`mt-msg ${m.who}`}>
+                                                <div className="mt-msgmeta">
+                                                    <span>{m.name}</span>
+                                                    <span>{m.time}</span>
+                                                </div>
+                                                <div className="mt-bubble">{m.text}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-chat-input">
+                                        <input
+                                            className="mt-chat-field"
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            placeholder="Type a message…"
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") sendMessage();
+                                            }}
+                                        />
+                                        <button className="mt-send" onClick={sendMessage} disabled={!chatInput.trim()}>
+                                            Send
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Notes */}
+                            {panel === "notes" && (
+                                <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+                                    <div className="nt-topTabs">
+                                        <button
+                                            className={`nt-tab ${notesTab === "remarks" ? "active" : ""}`}
+                                            onClick={() => setNotesTab("remarks")}
+                                        >
+                                            Remarks
+                                        </button>
+                                        <button
+                                            className={`nt-tab ${notesTab === "details" ? "active" : ""}`}
+                                            onClick={() => setNotesTab("details")}
+                                        >
+                                            Details
+                                        </button>
+                                    </div>
+
+                                    <div className="nt-interviewerRow">
+                                        <div className="nt-pillRow">
+                                            <div className="nt-namePill">
+                                                <div className="nt-avatarSm">R</div>
+                                                Robert Nachino
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="nt-body">
+                                        {notesTab === "remarks" && (
+                                            <textarea
+                                                className="nt-textarea"
+                                                value={remarks}
+                                                onChange={(e) => setRemarks(e.target.value)}
+                                                placeholder="Write remarks here… (Saved locally for now)"
+                                            />
+                                        )}
+
+                                        {notesTab === "details" && (
+                                            <div className="nt-profileCard">
+                                                <div className="nt-h1">Robert Nachino</div>
+                                                <div className="nt-small">Software Engineer</div>
+
+                                                <div className="nt-h2">Contact</div>
+                                                <div className="nt-kv">
+                                                    <div className="nt-ico">📍</div>
+                                                    <div className="nt-small">San Francisco, CA</div>
+                                                </div>
+                                                <div className="nt-kv">
+                                                    <div className="nt-ico">📞</div>
+                                                    <div className="nt-small">+1 (555) 123-4567</div>
+                                                </div>
+                                                <div className="nt-kv">
+                                                    <div className="nt-ico">✉️</div>
+                                                    <div className="nt-small">robert.nachino@email.com</div>
+                                                </div>
+                                                <div className="nt-kv">
+                                                    <div className="nt-ico">🔗</div>
+                                                    <div className="nt-small">
+                                                        <a className="nt-link" href="#" onClick={(e) => e.preventDefault()}>
+                                                            github.com/robertnachino
+                                                        </a>{" "}
+                                                        •{" "}
+                                                        <a className="nt-link" href="#" onClick={(e) => e.preventDefault()}>
+                                                            linkedin.com/in/robertnachino
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <div className="nt-h2">Professional Summary</div>
+                                                <div className="nt-small">
+                                                    Results-driven Software Engineer with 5+ years of experience designing,
+                                                    developing, and maintaining scalable web and backend applications. Strong
+                                                    background in full-stack development, cloud technologies, and agile
+                                                    methodologies. Passionate about clean code, performance optimization, and
+                                                    continuous learning.
+                                                </div>
+
+                                                <div className="nt-h2">Technical Skills</div>
+                                                <ul className="nt-list">
+                                                    <li>Languages: Java, Python, JavaScript, TypeScript</li>
+                                                    <li>Frameworks: React, Node.js, Spring Boot, Express</li>
+                                                    <li>Databases: PostgreSQL, MySQL, MongoDB, Redis</li>
+                                                    <li>Cloud/DevOps: AWS (EC2, S3, RDS), Docker, Kubernetes, CI/CD</li>
+                                                    <li>Tools: Git, GitHub, Jira, Jenkins</li>
+                                                    <li>Other: REST APIs, Microservices, Agile/Scrum, Unit Testing</li>
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </aside>
+                )}
+            </div>

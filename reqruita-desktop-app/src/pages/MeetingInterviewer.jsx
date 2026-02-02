@@ -47,17 +47,19 @@ export default function MeetingInterviewer({ session, onEnd }) {
     const waiting = useMemo(() => participants.filter(p => p.status === "waiting"), [participants]);
     const completed = useMemo(() => participants.filter(p => p.status === "completed"), [participants]);
 
-    const API_URL = "http://localhost:3001/api/participants";
+    const API_URL = "http://127.0.0.1:3001/api/participants";
 
     // Fetches the latest participant list from the backend
     const fetchParticipants = async () => {
         try {
             const res = await fetch(API_URL);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
             // Ensure data is an array before setting state
             setParticipants(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Failed to fetch participants", err);
+            setError("Backend connection failed. Please check if the server is running on port 3001.");
             setParticipants([]); // Reset to empty array on error
         }
     };

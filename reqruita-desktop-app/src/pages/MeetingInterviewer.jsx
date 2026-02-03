@@ -39,25 +39,37 @@ export default function MeetingInterviewer({ session, onEnd }) {
     const [notesTab, setNotesTab] = useState("remarks"); // remarks | details
     const [remarks, setRemarks] = useState("");
 
-    // Participants (demo data)
-    const [interviewing] = useState([
-        { id: "p1", name: "Mas Rover" },
-        { id: "p2", name: "Robert Nachino" },
-    ]);
+    // Participants state - Connected to Mock Backend (db.json)
+    const [participants, setParticipants] = useState([]);
 
-    const [waiting, setWaiting] = useState([
-        { id: "w1", name: "Elaina Kurama" },
-        { id: "w2", name: "Navia Fon" },
-        { id: "w3", name: "Jack Bron" },
-        { id: "w4", name: "Raiden" },
-    ]);
+    // Filtering participants based on status from the backend
+    const interviewing = useMemo(() => participants.filter(p => p.status === "interviewing"), [participants]);
+    const waiting = useMemo(() => participants.filter(p => p.status === "waiting"), [participants]);
+    const completed = useMemo(() => participants.filter(p => p.status === "completed"), [participants]);
 
-    const [completed, setCompleted] = useState([
-        { id: "c1", name: "Aether" },
-        { id: "c2", name: "Ananta" },
-        { id: "c3", name: "Brian Sumo" },
-        { id: "c4", name: "Mavuika" },
-    ]);
+    const API_URL = "http://127.0.0.1:3001/api/participants";
+
+    // Fetches the latest participant list from the backend
+    const fetchParticipants = async () => {
+        try {
+            console.log("Fetching from:", API_URL);
+            const res = await fetch(API_URL);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            const data = await res.json();
+            console.log("Participants received:", data);
+            // Ensure data is an array before setting state
+            setParticipants(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Failed to fetch participants", err);
+            setError("Backend connection failed. Please check if the server is running on port 3001.");
+            setParticipants([]); // Reset to empty array on error
+        }
+    };
+
+    // Load participants on component mount
+    useEffect(() => {
+        fetchParticipants();
+    }, []);
 
     const micLabel = useMemo(() => {
         const d = devices.mics.find((x) => x.deviceId === selectedMicId);
@@ -134,16 +146,34 @@ export default function MeetingInterviewer({ session, onEnd }) {
         setPanel((cur) => (cur === next ? null : next));
     }
 
-    // Waiting room actions
-    function acceptCandidate(id) {
-        const person = waiting.find((x) => x.id === id);
-        if (!person) return;
-        setWaiting((arr) => arr.filter((x) => x.id !== id));
-        setCompleted((arr) => [person, ...arr]);
+    // Waiting room actions - Integrated with Backend Status Transitions
+    async function acceptCandidate(id) {
+        try {
+            // Tells backend to move current interviewer to 'completed' 
+            // and the selected candidate to 'interviewing'
+            await fetch(`${API_URL}/allow`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
+            });
+            fetchParticipants(); // Refresh lists to show updated statuses
+        } catch (err) {
+            console.error("Failed to accept candidate", err);
+        }
     }
 
-    function rejectCandidate(id) {
-        setWaiting((arr) => arr.filter((x) => x.id !== id));
+    async function rejectCandidate(id) {
+        try {
+            // Removes candidate from the list/database
+            await fetch(`${API_URL}/reject`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
+            });
+            fetchParticipants(); // Refresh lists
+        } catch (err) {
+            console.error("Failed to reject candidate", err);
+        }
     }
 
     // Chat send

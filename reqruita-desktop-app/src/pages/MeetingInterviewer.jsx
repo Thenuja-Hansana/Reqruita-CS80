@@ -176,6 +176,20 @@ export default function MeetingInterviewer({ session, onEnd }) {
         }
     }
 
+    async function completeCandidate(id) {
+        try {
+            // Moves candidate to 'completed' status
+            await fetch(`${API_URL}/complete`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id }),
+            });
+            fetchParticipants(); // Refresh lists
+        } catch (err) {
+            console.error("Failed to complete candidate", err);
+        }
+    }
+
     // Chat send
     function sendMessage() {
         const text = chatInput.trim();
@@ -257,6 +271,20 @@ export default function MeetingInterviewer({ session, onEnd }) {
                                                 name={p.name}
                                                 actions={
                                                     <div className="mt-actions">
+                                                        <button
+                                                            className="mt-act mt-act-red"
+                                                            title="Reject"
+                                                            onClick={() => rejectCandidate(p.id)}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                        <button
+                                                            className="mt-act mt-act-blue"
+                                                            title="Complete"
+                                                            onClick={() => completeCandidate(p.id)}
+                                                        >
+                                                            ✓
+                                                        </button>
                                                         <button className="mt-act mt-act-gray" title="More">
                                                             ⋮
                                                         </button>

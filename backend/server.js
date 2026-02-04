@@ -144,6 +144,28 @@ app.post('/api/participants/reject', (req, res) => {
     });
 });
 
+// POST /api/participants/complete
+app.post('/api/participants/complete', (req, res) => {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ error: 'Participant ID is required' });
+
+    const sql = "UPDATE participants SET status = 'completed' WHERE id = ?";
+    db.run(sql, [id], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Participant not found" });
+        }
+        
+        // Fetch updated list to return
+        db.all("SELECT * FROM participants", [], (err, rows) => {
+            res.json({ message: 'Participant moved to completed', participants: rows });
+        });
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`SQL Mock Backend running at http://localhost:${PORT}`);
 });

@@ -865,10 +865,14 @@ body.rq-noscr{
   border-radius: 8px;
   border: none;
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 900;
   color: white;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
 }
 
 .mt-act-red{ background: #ef4444; }

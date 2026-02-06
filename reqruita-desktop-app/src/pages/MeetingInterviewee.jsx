@@ -17,16 +17,15 @@ import "./auth-ui.css";
  */
 
 export default function MeetingInterviewee({ session, onLeave }) {
-    const shareRef = useRef(null);
     const camRef = useRef(null);
 
-    const [shareStream, setShareStream] = useState(null);
     const [camStream, setCamStream] = useState(null);
 
     const [micMuted, setMicMuted] = useState(false);
     const [camOff, setCamOff] = useState(false);
 
     const [error, setError] = useState("");
+    const [googleOpen, setGoogleOpen] = useState(false);
 
     // Enter full-screen "locked" mode when candidate joins
     useEffect(() => {
@@ -52,7 +51,7 @@ export default function MeetingInterviewee({ session, onLeave }) {
         return () => document.body.classList.remove("rq-noscr");
     }, []);
 
-    // Start camera + screen share when entering meeting
+    // Start camera when entering meeting
     useEffect(() => {
         let mounted = true;
 
@@ -66,33 +65,14 @@ export default function MeetingInterviewee({ session, onLeave }) {
 
                 setCamStream(cam);
                 if (camRef.current) camRef.current.srcObject = cam;
-
-                // Screen share (candidate shares screen)
-                const scr = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-                if (!mounted) return;
-
-                setShareStream(scr);
-                if (shareRef.current) shareRef.current.srcObject = scr;
-
-                // Detect stop share from browser UI
-                const track = scr.getVideoTracks()[0];
-                if (track) {
-                    track.onended = () => {
-                        stopStream(scr);
-                        setShareStream(null);
-                        if (shareRef.current) shareRef.current.srcObject = null;
-                        setError("Screen sharing stopped.");
-                    };
-                }
             } catch (e) {
-                setError("Could not start camera/screen share. Please check permissions.");
+                setError("Could not start camera/microphone. Please check permissions.");
             }
         })();
 
         return () => {
             mounted = false;
             stopStream(camStream);
-            stopStream(shareStream);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -126,7 +106,6 @@ export default function MeetingInterviewee({ session, onLeave }) {
         }
 
         stopStream(camStream);
-        stopStream(shareStream);
         onLeave?.();
     }
 
@@ -141,15 +120,36 @@ export default function MeetingInterviewee({ session, onLeave }) {
             <div className="jm-row">
                 {/* Main shared screen */}
                 <div className="jm-main">
-                    <div className="jm-share">
-                        {shareStream ? (
-                            <video ref={shareRef} autoPlay playsInline muted />
-                        ) : (
-                            <div className="jm-share-placeholder">
-                                Screen share (not active)
-                                <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8, fontWeight: 700 }}>
-                                    Meeting: {session?.meetingId || "—"}
+                    <div className="jm-google">
+                        {!googleOpen && (
+                            <div className="jm-google-launch">
+                                <div className="jm-google-badge">G</div>
+                                <div className="jm-google-title">Google app</div>
+                                <div className="jm-google-sub">
+                                    Open Google for quick searches during the interview.
                                 </div>
+                                <div className="jm-google-meta">Meeting: {session?.meetingId || "—"}</div>
+                                <button className="jm-google-btn" onClick={() => setGoogleOpen(true)}>
+                                    Open Google
+                                </button>
+                            </div>
+                        )}
+
+                        {googleOpen && (
+                            <div className="jm-google-shell">
+                                <div className="jm-google-bar">
+                                    <div className="jm-google-badge sm">G</div>
+                                    <div className="jm-google-title">Google</div>
+                                    <button className="jm-google-btn" onClick={() => setGoogleOpen(false)}>
+                                        Close
+                                    </button>
+                                </div>
+                                <iframe
+                                    className="jm-google-frame"
+                                    title="Google"
+                                    src="https://www.google.com/webhp?igu=1"
+                                    referrerPolicy="no-referrer"
+                                />
                             </div>
                         )}
                     </div>

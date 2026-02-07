@@ -4,15 +4,10 @@ import "./auth-ui.css";
 import { BACKEND_URL } from "../config";
 
 /**
- * MeetingInterviewee.jsx (WORKING)
- * - Enters kiosk-ish interview mode on mount (Electron preload)
+ * MeetingInterviewee.jsx (FINAL MVP)
  * - Starts camera+mic
  * - Registers candidate on backend so interviewer can see them
- * - Cleans up on leave/unmount
- *
- * Backend required:
- *  POST /api/participants/join  body: { meetingId, name }
- *  POST /api/participants/leave body: { meetingId, name }   (optional)
+ * - Does NOT require meetingId (because your session.meetingId is currently "—")
  */
 
 export default function MeetingInterviewee({ session, onLeave }) {
@@ -25,11 +20,8 @@ export default function MeetingInterviewee({ session, onLeave }) {
     const [error, setError] = useState("");
     const [googleOpen, setGoogleOpen] = useState(false);
 
-    // You can replace this with a real name input later
-    const candidateName =
-        session?.candidateName ||
-        session?.name ||
-        "Candidate";
+    // Candidate display name (later replace with real input)
+    const candidateName = session?.candidateName || session?.name || "Candidate";
 
     // 1) Enter/Exit interview mode (Electron)
     useEffect(() => {
@@ -54,44 +46,28 @@ export default function MeetingInterviewee({ session, onLeave }) {
         return () => document.body.classList.remove("rq-noscr");
     }, []);
 
-    // 3) Register candidate on backend (so interviewer can see them)
+    // 3) Register candidate on backend (IMPORTANT)
     useEffect(() => {
-        if (!session?.meetingId) return;
-
         const controller = new AbortController();
 
         (async () => {
             try {
+                setError("");
+
                 await fetch(`${BACKEND_URL}/api/participants/join`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     signal: controller.signal,
-                    body: JSON.stringify({
-                        meetingId: session.meetingId,
-                        name: candidateName,
-                    }),
+                    body: JSON.stringify({ name: candidateName }),
                 });
             } catch (e) {
-                // Don’t hard-crash the UI; just show a helpful message
                 console.log("Join backend failed:", e);
                 setError("Could not connect to interview server. Check backend + Wi-Fi/IP.");
             }
         })();
 
-        // Optional: tell backend we left when page closes/unmounts
-        return () => {
-            controller.abort();
-            // fire-and-forget; don’t block UI
-            fetch(`${BACKEND_URL}/api/participants/leave`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    meetingId: session.meetingId,
-                    name: candidateName,
-                }),
-            }).catch(() => { });
-        };
-    }, [session?.meetingId, candidateName]);
+        return () => controller.abort();
+    }, [candidateName]);
 
     // 4) Start camera/mic
     useEffect(() => {
@@ -125,13 +101,13 @@ export default function MeetingInterviewee({ session, onLeave }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // 5) Apply mic toggle
+    // Apply mic toggle
     useEffect(() => {
         if (!camStream) return;
         setTracksEnabled(camStream, "audio", !micMuted);
     }, [micMuted, camStream]);
 
-    // 6) Apply camera toggle
+    // Apply camera toggle
     useEffect(() => {
         if (!camStream) return;
         setTracksEnabled(camStream, "video", !camOff);
@@ -216,7 +192,8 @@ export default function MeetingInterviewee({ session, onLeave }) {
                             style={{
                                 width: "100%",
                                 height: "100%",
-                                background: "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))",
+                                background:
+                                    "linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04))",
                                 display: "grid",
                                 placeItems: "center",
                                 color: "rgba(255,255,255,0.9)",

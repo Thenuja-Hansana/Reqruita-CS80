@@ -166,6 +166,28 @@ app.post('/api/participants/complete', (req, res) => {
     });
 });
 
+// POST /api/participants/join
+// Adds a real candidate as "waiting"
+app.post("/api/participants/join", (req, res) => {
+    const { name } = req.body;
+
+    if (!name) return res.status(400).json({ error: "Name is required" });
+
+    // Unique id for new candidate
+    const id = "u_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);
+
+    const sql = "INSERT INTO participants (id, name, status) VALUES (?, ?, 'waiting')";
+    db.run(sql, [id, name], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        // Return updated list
+        db.all("SELECT * FROM participants", [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    });
+});
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Backend running on http://0.0.0.0:${PORT}`);
 });

@@ -2,15 +2,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./auth-ui.css";
 import { BACKEND_URL } from "../config";
+
 /**
- * MeetingInterviewer.jsx
+ * MeetingInterviewer.jsx (FINAL WORKING)
  * - Right panel toggles: Participants / Chat / Notes
- * - Notes has Remarks/Details toggle
- * - Main stage shrinks when right panel opens, tiles keep same size
- *
- * NOTE:
- * - This is MVP UI + local state (no backend)
- * - Interviewee video/share are placeholders 
+ * - Participants list comes from backend
+ * - Works with backend responses:
+ *    GET /api/participants -> [ ...rows ]
+ *    POST /allow /reject /complete -> { message, participants: [ ...rows ] }
  */
 
 export default function MeetingInterviewer({ session, onEnd }) {
@@ -39,40 +38,46 @@ export default function MeetingInterviewer({ session, onEnd }) {
     const [notesTab, setNotesTab] = useState("remarks"); // remarks | details
     const [remarks, setRemarks] = useState("");
 
-    // Participants state - Connected to Mock Backend (db.json)
+    // Participants state
     const [participants, setParticipants] = useState([]);
 
-    // Filtering participants based on status from the backend
-    const interviewing = useMemo(() => participants.filter(p => p.status === "interviewing"), [participants]);
-    const waiting = useMemo(() => participants.filter(p => p.status === "waiting"), [participants]);
-    const completed = useMemo(() => participants.filter(p => p.status === "completed"), [participants]);
-
-    //const API_URL = "http://172.20.10.4:3001/api/participants";
+    // Derived lists
+    const interviewing = useMemo(() => participants.filter((p) => p.status === "interviewing"), [participants]);
+    const waiting = useMemo(() => participants.filter((p) => p.status === "waiting"), [participants]);
+    const completed = useMemo(() => participants.filter((p) => p.status === "completed"), [participants]);
 
     const API_URL = `${BACKEND_URL}/api/participants`;
 
-    // Fetches the latest participant list from the backend
+    // Normalize backend responses:
+    // - array => array
+    // - { participants: array } => array
+    const normalizeParticipants = (data) => {
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.participants)) return data.participants;
+        return [];
+    };
+
+    // Fetch participant list (GET)
     const fetchParticipants = async () => {
         try {
-            console.log("Fetching from:", API_URL);
             const res = await fetch(API_URL);
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             const data = await res.json();
-            console.log("Participants received:", data);
-            // Ensure data is an array before setting state
-            setParticipants(Array.isArray(data) ? data : []);
+            setParticipants(normalizeParticipants(data));
+            setError("");
         } catch (err) {
             console.error("Failed to fetch participants", err);
             setError("Backend connection failed. Please check if the server is running on port 3001.");
-            setParticipants([]); // Reset to empty array on error
+            setParticipants([]);
         }
     };
 
-    // Load participants on component mount
+    // Load + poll participants
     useEffect(() => {
         fetchParticipants();
         const t = setInterval(fetchParticipants, 2000);
         return () => clearInterval(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const micLabel = useMemo(() => {
@@ -85,7 +90,7 @@ export default function MeetingInterviewer({ session, onEnd }) {
         return d?.label || "Camera";
     }, [devices.cams, selectedCamId]);
 
-    // Keep meeting non-scroll (right panel will scroll internally)
+    // Keep meeting non-scroll
     useEffect(() => {
         document.body.classList.add("rq-noscr");
         return () => document.body.classList.remove("rq-noscr");
@@ -150,17 +155,16 @@ export default function MeetingInterviewer({ session, onEnd }) {
         setPanel((cur) => (cur === next ? null : next));
     }
 
-    // Waiting room actions - Integrated with Backend Status Transitions
+    // Waiting room actions (POST) - update state from response
     async function acceptCandidate(id) {
         try {
-            // Tells backend to move current interviewer to 'completed' 
-            // and the selected candidate to 'interviewing'
-            await fetch(`${API_URL}/allow`, {
+            const res = await fetch(`${API_URL}/allow`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id }),
             });
-            fetchParticipants(); // Refresh lists to show updated statuses
+            const data = await res.json();
+            setParticipants(normalizeParticipants(data));
         } catch (err) {
             console.error("Failed to accept candidate", err);
         }
@@ -168,13 +172,13 @@ export default function MeetingInterviewer({ session, onEnd }) {
 
     async function rejectCandidate(id) {
         try {
-            // Removes candidate from the list/database
-            await fetch(`${API_URL}/reject`, {
+            const res = await fetch(`${API_URL}/reject`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id }),
             });
-            fetchParticipants(); // Refresh lists
+            const data = await res.json();
+            setParticipants(normalizeParticipants(data));
         } catch (err) {
             console.error("Failed to reject candidate", err);
         }
@@ -182,13 +186,13 @@ export default function MeetingInterviewer({ session, onEnd }) {
 
     async function completeCandidate(id) {
         try {
-            // Moves candidate to 'completed' status
-            await fetch(`${API_URL}/complete`, {
+            const res = await fetch(`${API_URL}/complete`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id }),
             });
-            fetchParticipants(); // Refresh lists
+            const data = await res.json();
+            setParticipants(normalizeParticipants(data));
         } catch (err) {
             console.error("Failed to complete candidate", err);
         }
@@ -230,8 +234,7 @@ export default function MeetingInterviewer({ session, onEnd }) {
                             style={{
                                 width: "100%",
                                 height: "100%",
-                                background:
-                                    "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
+                                background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
                                 display: "grid",
                                 placeItems: "center",
                                 color: "rgba(255,255,255,0.9)",
@@ -275,18 +278,10 @@ export default function MeetingInterviewer({ session, onEnd }) {
                                                 name={p.name}
                                                 actions={
                                                     <div className="mt-actions">
-                                                        <button
-                                                            className="mt-act mt-act-red"
-                                                            title="Reject"
-                                                            onClick={() => rejectCandidate(p.id)}
-                                                        >
+                                                        <button className="mt-act mt-act-red" title="Reject" onClick={() => rejectCandidate(p.id)}>
                                                             ✕
                                                         </button>
-                                                        <button
-                                                            className="mt-act mt-act-blue"
-                                                            title="Complete"
-                                                            onClick={() => completeCandidate(p.id)}
-                                                        >
+                                                        <button className="mt-act mt-act-blue" title="Complete" onClick={() => completeCandidate(p.id)}>
                                                             ✓
                                                         </button>
                                                         <button className="mt-act mt-act-gray" title="More">
@@ -308,18 +303,10 @@ export default function MeetingInterviewer({ session, onEnd }) {
                                                 name={p.name}
                                                 actions={
                                                     <div className="mt-actions">
-                                                        <button
-                                                            className="mt-act mt-act-red"
-                                                            title="Remove"
-                                                            onClick={() => rejectCandidate(p.id)}
-                                                        >
+                                                        <button className="mt-act mt-act-red" title="Remove" onClick={() => rejectCandidate(p.id)}>
                                                             ✕
                                                         </button>
-                                                        <button
-                                                            className="mt-act mt-act-blue"
-                                                            title="Admit"
-                                                            onClick={() => acceptCandidate(p.id)}
-                                                        >
+                                                        <button className="mt-act mt-act-blue" title="Admit" onClick={() => acceptCandidate(p.id)}>
                                                             ✓
                                                         </button>
                                                         <button className="mt-act mt-act-gray" title="More">
@@ -388,16 +375,10 @@ export default function MeetingInterviewer({ session, onEnd }) {
                             {panel === "notes" && (
                                 <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
                                     <div className="nt-topTabs">
-                                        <button
-                                            className={`nt-tab ${notesTab === "remarks" ? "active" : ""}`}
-                                            onClick={() => setNotesTab("remarks")}
-                                        >
+                                        <button className={`nt-tab ${notesTab === "remarks" ? "active" : ""}`} onClick={() => setNotesTab("remarks")}>
                                             Remarks
                                         </button>
-                                        <button
-                                            className={`nt-tab ${notesTab === "details" ? "active" : ""}`}
-                                            onClick={() => setNotesTab("details")}
-                                        >
+                                        <button className={`nt-tab ${notesTab === "details" ? "active" : ""}`} onClick={() => setNotesTab("details")}>
                                             Details
                                         </button>
                                     </div>
@@ -454,11 +435,8 @@ export default function MeetingInterviewer({ session, onEnd }) {
 
                                                 <div className="nt-h2">Professional Summary</div>
                                                 <div className="nt-small">
-                                                    Results-driven Software Engineer with 5+ years of experience designing,
-                                                    developing, and maintaining scalable web and backend applications. Strong
-                                                    background in full-stack development, cloud technologies, and agile
-                                                    methodologies. Passionate about clean code, performance optimization, and
-                                                    continuous learning.
+                                                    Results-driven Software Engineer with 5+ years of experience designing, developing, and maintaining scalable web and backend applications.
+                                                    Strong background in full-stack development, cloud technologies, and agile methodologies.
                                                 </div>
 
                                                 <div className="nt-h2">Technical Skills</div>

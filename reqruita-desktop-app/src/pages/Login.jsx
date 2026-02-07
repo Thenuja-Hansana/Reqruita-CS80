@@ -49,7 +49,13 @@ export default function Login({ role, onBack, onSuccess }) {
         }
 
         // Move to next stage (DeviceCheck)
-        onSuccess?.({ role, email: email.trim(), meetingId: meetingId.trim(), remember });
+        onSuccess?.({
+            role,
+            email: email.trim(),
+            meetingId: meetingId.trim(),
+            password: password.trim(),   // ✅ add this
+            remember
+        });
     }
 
     const title = role === "join" ? "Join interview" : "Conduct interview";

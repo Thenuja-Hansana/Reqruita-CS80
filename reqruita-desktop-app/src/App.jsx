@@ -8,8 +8,7 @@ import DeviceCheck from "./pages/DeviceCheck.jsx";
 import MeetingInterviewer from "./pages/MeetingInterviewer.jsx";
 import MeetingInterviewee from "./pages/MeetingInterviewee.jsx";
 
-//TEMP hardcoded credentials 
-
+// TEMP hardcoded credentials
 const USERS = [
   {
     role: "join", // Interviewee (Candidate) joins interview
@@ -25,15 +24,13 @@ const USERS = [
   },
 ];
 
-
 export default function App() {
   const [step, setStep] = useState("role"); // role | login | devices | meeting
-  const [role, setRole] = useState(null);   // "join" | "conduct"
+  const [role, setRole] = useState(null); // "join" | "conduct"
   const [session, setSession] = useState(null);
 
   const users = useMemo(() => USERS, []);
 
-  // Keep base background consistent 
   useEffect(() => {
     document.documentElement.style.background = "#fff";
     document.body.style.background = "#fff";
@@ -46,22 +43,37 @@ export default function App() {
   }
 
   function onPickRole(nextRole) {
-    setRole(nextRole); // "join" or "conduct"
+    setRole(nextRole);
     setStep("login");
   }
 
-  //We keep "id" as email for now to avoid heavy changes in Login.jsx
-  function onLogin({ id, meetingId, password, role: roleFromLogin }) {
-    const email = (id || "").trim().toLowerCase();
+  // Accept BOTH shapes:
+  // - { id, meetingId, password, role }
+  // - { email, meetingId, password, role }
+  function onLogin(payload) {
+    const {
+      id,
+      email,
+      meetingId,
+      password,
+      role: roleFromLogin,
+    } = payload || {};
+
+    const em = (id || email || "").trim().toLowerCase();
     const mId = (meetingId || "").trim();
+    const pwd = (password || "").trim();
     const currentRole = roleFromLogin || role;
+
+    if (!em || !mId || !pwd || !currentRole) {
+      return { ok: false, error: "Please enter Email, Meeting ID, and Password." };
+    }
 
     const found = users.find(
       (u) =>
         u.role === currentRole &&
-        u.email.toLowerCase() === email &&
+        u.email.toLowerCase() === em &&
         u.meetingId === mId &&
-        u.password === password
+        u.password === pwd
     );
 
     if (!found) {
@@ -78,32 +90,25 @@ export default function App() {
     return { ok: true };
   }
 
-  function onDevicesReady(deviceState) {
-    // If you want to store device state later:
-    // setSession((s) => ({ ...s, deviceState }));
+  function onDevicesReady() {
     setStep("meeting");
   }
 
-  // End/Leave meeting -> reset to start
   function onEnd() {
     resetAll();
   }
 
   return (
     <>
-      {step === "role" && (
-        <RoleSelect onPickRole={onPickRole} />
-      )}
+      {step === "role" && <RoleSelect onPickRole={onPickRole} />}
 
       {step === "login" && (
         <Login
           role={role}
           onSuccess={(payload) => {
-            const res = onLogin(payload);     // <-- IMPORTANT: validate + setSession properly
-            if (!res.ok) {
-              // If your Login page supports showing error, you can handle it there later
-              console.log(res.error);
-            }
+            // alert(JSON.stringify(payload, null, 2)); 
+            const res = onLogin(payload);
+            if (!res.ok) alert(res.error);
           }}
         />
       )}
@@ -117,14 +122,12 @@ export default function App() {
         />
       )}
 
-      {step === "meeting" && (
-        role === "conduct" ? (
+      {step === "meeting" &&
+        (role === "conduct" ? (
           <MeetingInterviewer session={session} onEnd={onEnd} />
         ) : (
           <MeetingInterviewee session={session} onLeave={onEnd} />
-        )
-      )}
+        ))}
     </>
   );
 }
-

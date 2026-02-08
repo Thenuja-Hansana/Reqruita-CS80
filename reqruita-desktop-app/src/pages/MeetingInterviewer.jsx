@@ -2,26 +2,41 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./auth-ui.css";
 import { BACKEND_URL } from "../config";
+import { useWebRTC } from "../webrtc/useWebRTC";
 
 /**
- * MeetingInterviewer.jsx (FINAL WORKING)
- * - Right panel toggles: Participants / Chat / Notes
- * - Participants list comes from backend
- * - Works with backend responses:
- *    GET /api/participants -> [ ...rows ]
- *    POST /allow /reject /complete -> { message, participants: [ ...rows ] }
+ * MeetingInterviewer.jsx (FINAL - WebRTC + Participants Panel)
+ * ✅ Shows:
+ *   - Your local cam preview
+ *   - Remote candidate cam (audio + video)
+ *   - Remote candidate screen share (big stage)
+ * ✅ Keeps:
+ *   - Right panel toggles: Participants / Chat / Notes
+ *   - Participants list from backend (polling every 2s)
+ *
+ * Backend requirements:
+ *   - REST: /api/participants endpoints (your existing ones)
+ *   - Socket.IO signaling: join-meeting + webrtc-signal (from the updated server.js)
  */
 
 export default function MeetingInterviewer({ session, onEnd }) {
-    const videoRef = useRef(null);
+    const meetingId = session?.meetingId || "";
 
-    // Streams / devices
+    // Video refs
+    const localVideoRef = useRef(null);
+    const remoteCamRef = useRef(null);
+    const remoteScreenRef = useRef(null);
+
+    // Streams / devices (UI labels only)
     const [devices, setDevices] = useState({ mics: [], cams: [] });
     const [selectedMicId, setSelectedMicId] = useState("");
     const [selectedCamId, setSelectedCamId] = useState("");
+
+    // Toggles
     const [micMuted, setMicMuted] = useState(false);
     const [camOff, setCamOff] = useState(false);
-    const [camStream, setCamStream] = useState(null);
+
+    // UI error
     const [error, setError] = useState("");
 
     // Right panel: null | "participants" | "chat" | "notes"
@@ -40,6 +55,15 @@ export default function MeetingInterviewer({ session, onEnd }) {
 
     // Participants state
     const [participants, setParticipants] = useState([]);
+
+    // ✅ WebRTC hook (local cam+mic + remote cam + remote screen)
+    const {
+        localCamStream,
+        remoteCamStream,
+        remoteScreenStream,
+        setMicEnabled,
+        setCamEnabled,
+    } = useWebRTC({ meetingId, role: "interviewer" });
 
     // Derived lists
     const interviewing = useMemo(() => participants.filter((p) => p.status === "interviewing"), [participants]);
@@ -80,6 +104,70 @@ export default function MeetingInterviewer({ session, onEnd }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Keep meeting non-scroll
+    useEffect(() => {
+        document.body.classList.add("rq-noscr");
+        return () => document.body.classList.remove("rq-noscr");
+    }, []);
+
+    // Attach local stream to local preview
+    useEffect(() => {
+        if (localVideoRef.current && localCamStream) {
+            localVideoRef.current.srcObject = localCamStream;
+        }
+    }, [localCamStream]);
+
+    // Attach remote cam stream
+    useEffect(() => {
+        if (remoteCamRef.current && remoteCamStream) {
+            remoteCamRef.current.srcObject = remoteCamStream;
+        }
+    }, [remoteCamStream]);
+
+    // Attach remote screen stream
+    useEffect(() => {
+        if (remoteScreenRef.current && remoteScreenStream) {
+            remoteScreenRef.current.srcObject = remoteScreenStream;
+        }
+    }, [remoteScreenStream]);
+
+    // Enumerate devices once we have permission (localCamStream exists)
+    useEffect(() => {
+        let mounted = true;
+
+        (async () => {
+            try {
+                if (!localCamStream) return;
+
+                const list = await navigator.mediaDevices.enumerateDevices();
+                if (!mounted) return;
+
+                const mics = list.filter((d) => d.kind === "audioinput");
+                const cams = list.filter((d) => d.kind === "videoinput");
+                setDevices({ mics, cams });
+
+                if (mics[0]?.deviceId) setSelectedMicId(mics[0].deviceId);
+                if (cams[0]?.deviceId) setSelectedCamId(cams[0].deviceId);
+            } catch (e) {
+                // Not fatal: device labels might be missing
+                console.warn("enumerateDevices failed:", e);
+            }
+        })();
+
+        return () => {
+            mounted = false;
+        };
+    }, [localCamStream]);
+
+    // Apply toggles to local stream through WebRTC hook
+    useEffect(() => {
+        setMicEnabled(!micMuted);
+    }, [micMuted, setMicEnabled]);
+
+    useEffect(() => {
+        setCamEnabled(!camOff);
+    }, [camOff, setCamEnabled]);
+
     const micLabel = useMemo(() => {
         const d = devices.mics.find((x) => x.deviceId === selectedMicId);
         return d?.label || "Microphone";
@@ -90,54 +178,6 @@ export default function MeetingInterviewer({ session, onEnd }) {
         return d?.label || "Camera";
     }, [devices.cams, selectedCamId]);
 
-    // Keep meeting non-scroll
-    useEffect(() => {
-        document.body.classList.add("rq-noscr");
-        return () => document.body.classList.remove("rq-noscr");
-    }, []);
-
-    // Start camera+mic once so labels appear on Windows
-    useEffect(() => {
-        let mounted = true;
-
-        (async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                if (!mounted) return;
-
-                setCamStream(stream);
-                if (videoRef.current) videoRef.current.srcObject = stream;
-
-                const list = await navigator.mediaDevices.enumerateDevices();
-                const mics = list.filter((d) => d.kind === "audioinput");
-                const cams = list.filter((d) => d.kind === "videoinput");
-                setDevices({ mics, cams });
-
-                if (mics[0]?.deviceId) setSelectedMicId(mics[0].deviceId);
-                if (cams[0]?.deviceId) setSelectedCamId(cams[0].deviceId);
-            } catch (e) {
-                setError("Could not access camera/microphone. Please check permissions.");
-            }
-        })();
-
-        return () => {
-            mounted = false;
-            stopStream(camStream);
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // Apply toggles to current stream
-    useEffect(() => {
-        if (!camStream) return;
-        setTracksEnabled(camStream, "audio", !micMuted);
-    }, [micMuted, camStream]);
-
-    useEffect(() => {
-        if (!camStream) return;
-        setTracksEnabled(camStream, "video", !camOff);
-    }, [camOff, camStream]);
-
     function toggleMic() {
         setMicMuted((v) => !v);
     }
@@ -147,7 +187,6 @@ export default function MeetingInterviewer({ session, onEnd }) {
     }
 
     function endInterview() {
-        stopStream(camStream);
         onEnd?.();
     }
 
@@ -210,6 +249,9 @@ export default function MeetingInterviewer({ session, onEnd }) {
         setChatInput("");
     }
 
+    const hasRemoteCam = !!remoteCamStream;
+    const hasRemoteScreen = !!remoteScreenStream;
+
     return (
         <div className="mt-wrap">
             {error && <div className="mt-err">{error}</div>}
@@ -218,38 +260,48 @@ export default function MeetingInterviewer({ session, onEnd }) {
             <div className={`mt-mainrow ${panel ? "withSide" : ""}`}>
                 {/* Main Stage */}
                 <div className="mt-stage">
-                    {/* Main shared screen placeholder */}
+                    {/* Main shared screen (remote screen share) */}
                     <div className="mt-share">
-                        <div className="mt-share-placeholder">
-                            Interviewee screen share (placeholder)
-                            <div style={{ marginTop: 8, fontWeight: 700, opacity: 0.8, fontSize: 12 }}>
-                                Meeting: {session?.meetingId || "—"}
+                        {hasRemoteScreen ? (
+                            <video ref={remoteScreenRef} autoPlay playsInline />
+                        ) : (
+                            <div className="mt-share-placeholder">
+                                Candidate screen share (waiting…)
+                                <div style={{ marginTop: 8, fontWeight: 700, opacity: 0.8, fontSize: 12 }}>
+                                    Meeting: {meetingId || "—"}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Interviewee cam tile (bottom-left) */}
                     <div className="mt-tile mt-tile-peer">
-                        <div
-                            style={{
-                                width: "100%",
-                                height: "100%",
-                                background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
-                                display: "grid",
-                                placeItems: "center",
-                                color: "rgba(255,255,255,0.9)",
-                                fontWeight: 900,
-                                fontSize: 12,
-                            }}
-                        >
-                            Interviewee video
-                        </div>
+                        {hasRemoteCam ? (
+                            <video ref={remoteCamRef} autoPlay playsInline />
+                        ) : (
+                            <div
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    color: "rgba(255,255,255,0.9)",
+                                    fontWeight: 900,
+                                    fontSize: 12,
+                                    textAlign: "center",
+                                    padding: 10,
+                                }}
+                            >
+                                Candidate video (waiting…)
+                            </div>
+                        )}
                         <div className="mt-tile-label">Interviewee</div>
                     </div>
 
                     {/* Interviewer tile (bottom-right) */}
                     <div className="mt-tile mt-tile-self">
-                        <video ref={videoRef} autoPlay playsInline muted />
+                        <video ref={localVideoRef} autoPlay playsInline muted />
                         <div className="mt-tile-label">You (Interviewer)</div>
                     </div>
                 </div>
@@ -291,6 +343,9 @@ export default function MeetingInterviewer({ session, onEnd }) {
                                                 }
                                             />
                                         ))}
+                                        {interviewing.length === 0 && (
+                                            <div style={{ padding: 12, opacity: 0.8, fontSize: 12 }}>No one is interviewing right now.</div>
+                                        )}
                                     </div>
 
                                     <div className="mt-sec-title" style={{ marginTop: 14 }}>
@@ -316,6 +371,9 @@ export default function MeetingInterviewer({ session, onEnd }) {
                                                 }
                                             />
                                         ))}
+                                        {waiting.length === 0 && (
+                                            <div style={{ padding: 12, opacity: 0.8, fontSize: 12 }}>No one is in the waiting room.</div>
+                                        )}
                                     </div>
 
                                     <div className="mt-sec-title" style={{ marginTop: 14 }}>
@@ -335,6 +393,9 @@ export default function MeetingInterviewer({ session, onEnd }) {
                                                 }
                                             />
                                         ))}
+                                        {completed.length === 0 && (
+                                            <div style={{ padding: 12, opacity: 0.8, fontSize: 12 }}>No completed participants yet.</div>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -511,15 +572,4 @@ function ParticipantRow({ name, actions }) {
             {actions}
         </div>
     );
-}
-
-/* ---------- Media helpers ---------- */
-function stopStream(stream) {
-    if (!stream) return;
-    for (const track of stream.getTracks()) track.stop();
-}
-
-function setTracksEnabled(stream, kind, enabled) {
-    const tracks = kind === "audio" ? stream.getAudioTracks() : stream.getVideoTracks();
-    for (const t of tracks) t.enabled = enabled;
 }

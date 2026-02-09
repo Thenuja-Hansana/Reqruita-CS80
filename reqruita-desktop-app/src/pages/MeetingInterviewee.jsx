@@ -19,6 +19,11 @@ import { useWebRTC } from "../webrtc/useWebRTC";
  */
 
 export default function MeetingInterviewee({ session, onLeave }) {
+    const camRef = useRef(null);
+    const screenRef = useRef(null);
+
+    const [camStream, setCamStream] = useState(null);
+    const [screenStream, setScreenStream] = useState(null);
     const meetingId = useMemo(() => session?.meetingId || "", [session]);
 
     // Video refs
@@ -176,6 +181,18 @@ export default function MeetingInterviewee({ session, onLeave }) {
             <div className="jm-row">
                 {/* Main area */}
                 <div className="jm-main">
+                    {/* Hidden video element for screen capture (not displayed, just for stream) */}
+                    {screenStream && (
+                        <video 
+                            ref={screenRef} 
+                            autoPlay 
+                            playsInline 
+                            muted
+                            style={{ display: 'none' }}
+                        />
+                    )}
+                    
+                    {/* Google App (visible to interviewee) */}
                     <div className="jm-google">
                         {!googleOpen && (
                             <div className="jm-google-launch">

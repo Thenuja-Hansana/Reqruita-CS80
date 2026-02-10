@@ -1374,13 +1374,3 @@ body.rq-noscr{
   align-items: center;
   gap: 10px;
 }
-
-/* Pulse animation for screen sharing indicator */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}

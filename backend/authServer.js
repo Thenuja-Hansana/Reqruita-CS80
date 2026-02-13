@@ -29,22 +29,22 @@ const User = mongoose.model('User', userSchema);
 
 // --- Routes ---
 
-// 1. Registration Route
+// 1. Registration Route - Handles creating new Admin/Interviewer accounts
 app.post('/api/register', async (req, res) => {
     try {
         const { fullName, email, password, role } = req.body;
 
-        // Check if user exists
+        // check if a user with this email already exists in MongoDB
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "Email already registered" });
         }
 
-        // Hash password
+        // Encrypt the password using bcrypt for security
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Save User
+        // Create a new user object with the hashed password
         const newUser = new User({
             fullName,
             email,
@@ -52,6 +52,7 @@ app.post('/api/register', async (req, res) => {
             role
         });
 
+        // Save the user to the MongoDB collection
         await newUser.save();
         res.status(201).json({ message: "Account created successfully!" });
     } catch (error) {
@@ -59,30 +60,32 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// 2. Login Route
+// 2. Login Route - Verifies credentials and provides a secure session token
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
+        // Find the user in the database by their email
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        // Check password
+        // Compare the provided plain-text password with the stored hashed password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid email or password" });
         }
 
-        // Generate Token
+        // Create a JSON Web Token (JWT) containing the user's ID and role
+        // This token is used by the frontend to prove the user is authenticated
         const token = jwt.sign(
             { id: user._id, role: user.role },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
 
+        // Send the token and user details back to the landing page
         res.json({
             message: "Login successful",
             token,

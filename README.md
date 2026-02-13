@@ -1,5 +1,5 @@
 <!-- ====== HERO ====== -->
-<h1 align="center">Reqruita Desktop 🧠💼</h1>
+<h1 align="center">Reqruita Desktop 🧠💼 </h1>
 
 <p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&duration=2500&pause=700&center=true&vCenter=true&width=700&lines=Secure+Interview+Platform+%E2%80%A2+Anti-Cheat+Focused;Electron+%2B+React+Desktop+App;Fullscreen+Enforcement+%E2%80%A2+Mandatory+Screen+Share" />

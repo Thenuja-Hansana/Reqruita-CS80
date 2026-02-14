@@ -132,6 +132,17 @@ export function useWebRTC({ meetingId, role }) {
                         console.error("ICE add failed", err);
                     }
                 }
+
+                if (data.type === "renegotiate" && role === "interviewer") {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+
+                    socket.emit("webrtc-signal", {
+                        meetingId,
+                        to: from,
+                        data: { type: "offer", sdp: pc.localDescription },
+                    });
+                }
             });
 
             // 5) join room
@@ -190,31 +201,6 @@ export function useWebRTC({ meetingId, role }) {
         }
         socketRef.current?.emit("webrtc-signal", { meetingId, to: peerIdRef.current, data: { type: "renegotiate" } });
     }
-
-    // handle renegotiate request: interviewer will re-offer
-    useEffect(() => {
-        const socket = socketRef.current;
-        const pc = pcRef.current;
-        if (!socket || !pc) return;
-
-        const handler = async ({ from, data }) => {
-            if (data?.type !== "renegotiate") return;
-            if (role !== "interviewer") return;
-
-            peerIdRef.current = from;
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-
-            socket.emit("webrtc-signal", {
-                meetingId,
-                to: from,
-                data: { type: "offer", sdp: pc.localDescription },
-            });
-        };
-
-        socket.on("webrtc-signal", handler);
-        return () => socket.off("webrtc-signal", handler);
-    }, [meetingId, role]);
 
     function setMicEnabled(enabled) {
         if (!localCamStream) return;

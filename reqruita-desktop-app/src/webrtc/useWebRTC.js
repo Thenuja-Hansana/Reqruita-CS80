@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { BACKEND_URL } from "../config";
 
@@ -20,6 +20,49 @@ export function useWebRTC({ meetingId, role }) {
     const [remoteScreenStream, setRemoteScreenStream] = useState(null);
 
     const screenSenderRef = useRef(null);
+    const pendingScreenOfferRef = useRef(false);
+
+    const emitSignal = useCallback(
+        (data) => {
+            const socket = socketRef.current;
+            if (!socket) return;
+
+            const payload = { meetingId, data };
+            if (peerIdRef.current) payload.to = peerIdRef.current;
+
+            socket.emit("webrtc-signal", payload);
+        },
+        [meetingId]
+    );
+
+    const sendOffer = useCallback(async () => {
+        const pc = pcRef.current;
+        if (!pc || pc.signalingState === "closed") return;
+
+        try {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            emitSignal({ type: "offer", sdp: pc.localDescription });
+        } catch (err) {
+            console.error("Failed to create/send offer", err);
+        }
+    }, [emitSignal]);
+
+    const requestScreenOffer = useCallback(async () => {
+        const pc = pcRef.current;
+        if (!pc) return;
+
+        const peerConnected = !!peerIdRef.current;
+        const stable = pc.signalingState === "stable";
+
+        if (!peerConnected || !stable) {
+            pendingScreenOfferRef.current = true;
+            return;
+        }
+
+        pendingScreenOfferRef.current = false;
+        await sendOffer();
+    }, [sendOffer]);
 
     // helper: pick first stream as cam, second as screen
     const clearRemoteStream = (streamId, type) => {
@@ -64,11 +107,13 @@ export function useWebRTC({ meetingId, role }) {
             // send ICE candidates to peer
             pc.onicecandidate = (e) => {
                 if (e.candidate) {
-                    socket.emit("webrtc-signal", {
-                        meetingId,
-                        to: peerIdRef.current,
-                        data: { type: "ice", candidate: e.candidate },
-                    });
+                    emitSignal({ type: "ice", candidate: e.candidate });
+                }
+            };
+
+            pc.onsignalingstatechange = () => {
+                if (pc.signalingState === "stable" && pendingScreenOfferRef.current && peerIdRef.current) {
+                    requestScreenOffer();
                 }
             };
 
@@ -81,16 +126,7 @@ export function useWebRTC({ meetingId, role }) {
             // only the interviewer will initiate offers
             pc.onnegotiationneeded = async () => {
                 if (role !== "interviewer") return;
-                if (!peerIdRef.current) return;
-
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-
-                socket.emit("webrtc-signal", {
-                    meetingId,
-                    to: peerIdRef.current,
-                    data: { type: "offer", sdp: pc.localDescription },
-                });
+                await sendOffer();
             };
 
             // 3) local camera+mic
@@ -107,14 +143,9 @@ export function useWebRTC({ meetingId, role }) {
 
                 // interviewer will auto-create offer via negotiationneeded
                 if (role === "interviewer") {
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-
-                    socket.emit("webrtc-signal", {
-                        meetingId,
-                        to: peerId,
-                        data: { type: "offer", sdp: pc.localDescription },
-                    });
+                    await sendOffer();
+                } else if (pendingScreenOfferRef.current) {
+                    await requestScreenOffer();
                 }
             });
 
@@ -122,6 +153,7 @@ export function useWebRTC({ meetingId, role }) {
                 peerIdRef.current = null;
                 setRemoteCamStream(null);
                 setRemoteScreenStream(null);
+                pendingScreenOfferRef.current = false;
             });
 
             socket.on("webrtc-signal", async ({ from, data }) => {
@@ -132,11 +164,7 @@ export function useWebRTC({ meetingId, role }) {
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
 
-                    socket.emit("webrtc-signal", {
-                        meetingId,
-                        to: from,
-                        data: { type: "answer", sdp: pc.localDescription },
-                    });
+                    emitSignal({ type: "answer", sdp: pc.localDescription });
                 }
 
                 if (data.type === "answer") {
@@ -149,17 +177,6 @@ export function useWebRTC({ meetingId, role }) {
                     } catch (err) {
                         console.error("ICE add failed", err);
                     }
-                }
-
-                if (data.type === "renegotiate" && role === "interviewer") {
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-
-                    socket.emit("webrtc-signal", {
-                        meetingId,
-                        to: from,
-                        data: { type: "offer", sdp: pc.localDescription },
-                    });
                 }
             });
 
@@ -198,10 +215,7 @@ export function useWebRTC({ meetingId, role }) {
 
         // add as separate stream so remote can treat it as “screen”
         screenSenderRef.current = pc.addTrack(screenTrack, scr);
-        // renegotiation: interviewer is initiator so it will handle offer; if candidate adds, we still need renegotiate:
-        // easiest: manually trigger negotiation by creating offer if interviewer; else send a "negotiationneeded" by creating offer is complex.
-        // BUT in our setup interviewer initiates. So: candidate adding a track must ask interviewer to renegotiate:
-        socketRef.current?.emit("webrtc-signal", { meetingId, to: peerIdRef.current, data: { type: "renegotiate" } });
+        await requestScreenOffer();
     }
 
     async function stopScreenShare() {
@@ -217,7 +231,7 @@ export function useWebRTC({ meetingId, role }) {
             localScreenStream.getTracks().forEach((t) => t.stop());
             setLocalScreenStream(null);
         }
-        socketRef.current?.emit("webrtc-signal", { meetingId, to: peerIdRef.current, data: { type: "renegotiate" } });
+        await requestScreenOffer();
     }
 
     function setMicEnabled(enabled) {

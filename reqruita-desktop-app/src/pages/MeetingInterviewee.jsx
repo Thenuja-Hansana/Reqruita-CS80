@@ -87,6 +87,7 @@ export default function MeetingInterviewee({ session, onLeave, addToast }) {
                     body: JSON.stringify({ name: candidateName }),
                 });
             } catch (e) {
+                if (e.name === "AbortError") return; // normal cleanup
                 console.log("Join backend failed:", e);
                 setError("Could not connect to interview server. Check backend + Wi-Fi/IP.");
             }
@@ -234,9 +235,12 @@ export default function MeetingInterviewee({ session, onLeave, addToast }) {
                             <div className="jm-google-shell">
                                 <div className="jm-google-bar">
                                     <div className="jm-google-badge sm">G</div>
-                                    <div className="jm-google-title">Google</div>
-                                    <button className="jm-google-btn" onClick={() => setGoogleOpen(false)}>
-                                        Close
+                                    <div style={{ flex: 1, fontWeight: 800, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>Google</div>
+                                    <button className="jm-google-close" onClick={() => setGoogleOpen(false)} title="Close Google">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        </svg>
                                     </button>
                                 </div>
 

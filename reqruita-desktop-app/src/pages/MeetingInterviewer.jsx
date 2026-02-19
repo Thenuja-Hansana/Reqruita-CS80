@@ -272,6 +272,7 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
 
     const hasRemoteCam = !!remoteCamStream;
     const hasRemoteScreen = !!remoteScreenStream;
+    const totalParticipants = participants.length;
 
     return (
         <div className="mt-wrap">
@@ -296,9 +297,14 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
                             <video ref={remoteScreenRef} autoPlay playsInline />
                         ) : (
                             <div className="mt-share-placeholder">
-                                Candidate screen share (waiting…)
-                                <div style={{ marginTop: 8, fontWeight: 700, opacity: 0.8, fontSize: 12 }}>
-                                    Meeting: {meetingId || "—"}
+                                <div className="mt-ph-content">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                        <line x1="8" y1="21" x2="16" y2="21" />
+                                        <line x1="12" y1="17" x2="12" y2="21" />
+                                    </svg>
+                                    <div className="mt-ph-title">Waiting for screen share</div>
+                                    <div className="mt-ph-sub">The candidate's screen will appear here once they start sharing</div>
                                 </div>
                             </div>
                         )}
@@ -309,21 +315,14 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
                         {hasRemoteCam ? (
                             <video ref={remoteCamRef} autoPlay playsInline />
                         ) : (
-                            <div
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05))",
-                                    display: "grid",
-                                    placeItems: "center",
-                                    color: "rgba(255,255,255,0.9)",
-                                    fontWeight: 900,
-                                    fontSize: 12,
-                                    textAlign: "center",
-                                    padding: 10,
-                                }}
-                            >
-                                Candidate video (waiting…)
+                            <div className="mt-tile-ph">
+                                <div className="mt-tile-ph-avatar mt-tile-ph-pulse">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                </div>
+                                <span className="mt-tile-ph-text">Connecting…</span>
                             </div>
                         )}
                         <div className="mt-tile-label">Interviewee</div>
@@ -338,13 +337,16 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
 
                 {/* Right Panel */}
                 {panel && (
-                    <aside className="mt-side">
+                    <aside className="mt-side mt-side-enter">
                         <div className="mt-side-head">
                             <div className="mt-side-title">
-                                {panel === "participants" ? "Participants" : panel === "chat" ? "Chat" : "Notes"}
+                                {panel === "participants" ? `Participants (${totalParticipants})` : panel === "chat" ? "Chat" : "Notes"}
                             </div>
                             <button className="mt-side-close" onClick={() => setPanel(null)}>
-                                ✕
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
                             </button>
                         </div>
 
@@ -352,79 +354,75 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
                             {/* Participants */}
                             {panel === "participants" && (
                                 <>
-                                    <div className="mt-sec-title">Interviewing</div>
+                                    <div className="mt-sec-title">
+                                        <span>Interviewing</span>
+                                        {interviewing.length > 0 && <span className="mt-sec-badge">{interviewing.length}</span>}
+                                    </div>
                                     <div className="mt-card">
                                         {interviewing.map((p) => (
                                             <ParticipantRow
                                                 key={p.id}
                                                 name={p.name}
+                                                status="interviewing"
                                                 actions={
                                                     <div className="mt-actions">
                                                         <button className="mt-act mt-act-red" title="Reject" onClick={() => rejectCandidate(p.id)}>
-                                                            ✕
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                                         </button>
-                                                        <button className="mt-act mt-act-blue" title="Complete" onClick={() => completeCandidate(p.id)}>
-                                                            ✓
-                                                        </button>
-                                                        <button className="mt-act mt-act-gray" title="More">
-                                                            ⋮
+                                                        <button className="mt-act mt-act-green" title="Complete" onClick={() => completeCandidate(p.id)}>
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                                                         </button>
                                                     </div>
                                                 }
                                             />
                                         ))}
                                         {interviewing.length === 0 && (
-                                            <div style={{ padding: 12, opacity: 0.8, fontSize: 12 }}>No one is interviewing right now.</div>
+                                            <div className="mt-empty">No one is interviewing right now</div>
                                         )}
                                     </div>
 
                                     <div className="mt-sec-title" style={{ marginTop: 14 }}>
-                                        Waiting
+                                        <span>Waiting Room</span>
+                                        {waiting.length > 0 && <span className="mt-sec-badge mt-sec-badge-amber">{waiting.length}</span>}
                                     </div>
                                     <div className="mt-card">
                                         {waiting.map((p) => (
                                             <ParticipantRow
                                                 key={p.id}
                                                 name={p.name}
+                                                status="waiting"
                                                 actions={
                                                     <div className="mt-actions">
                                                         <button className="mt-act mt-act-red" title="Remove" onClick={() => rejectCandidate(p.id)}>
-                                                            ✕
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                                         </button>
-                                                        <button className="mt-act mt-act-blue" title="Admit" onClick={() => acceptCandidate(p.id)}>
-                                                            ✓
-                                                        </button>
-                                                        <button className="mt-act mt-act-gray" title="More">
-                                                            ⋮
+                                                        <button className="mt-act mt-act-green" title="Admit" onClick={() => acceptCandidate(p.id)}>
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                                                         </button>
                                                     </div>
                                                 }
                                             />
                                         ))}
                                         {waiting.length === 0 && (
-                                            <div style={{ padding: 12, opacity: 0.8, fontSize: 12 }}>No one is in the waiting room.</div>
+                                            <div className="mt-empty">No one is in the waiting room</div>
                                         )}
                                     </div>
 
                                     <div className="mt-sec-title" style={{ marginTop: 14 }}>
-                                        Completed Participants
+                                        <span>Completed</span>
+                                        {completed.length > 0 && <span className="mt-sec-badge mt-sec-badge-green">{completed.length}</span>}
                                     </div>
                                     <div className="mt-card">
                                         {completed.map((p) => (
                                             <ParticipantRow
                                                 key={p.id}
                                                 name={p.name}
-                                                actions={
-                                                    <div className="mt-actions">
-                                                        <button className="mt-act mt-act-blue" title="Details">
-                                                            ⋮
-                                                        </button>
-                                                    </div>
-                                                }
+                                                status="completed"
+                                                actions={null}
                                             />
                                         ))}
                                         {completed.length === 0 && (
-                                            <div style={{ padding: 12, opacity: 0.8, fontSize: 12 }}>No completed participants yet.</div>
+                                            <div className="mt-empty">No completed participants yet</div>
                                         )}
                                     </div>
                                 </>
@@ -456,7 +454,7 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
                                             }}
                                         />
                                         <button className="mt-send" onClick={sendMessage} disabled={!chatInput.trim()}>
-                                            Send
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
                                         </button>
                                     </div>
                                 </div>
@@ -549,39 +547,84 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
                 )}
             </div>
 
-            {/* Footer */}
+            {/* Footer Toolbar */}
             <div className="mt-footer">
                 <div className="mt-left">
-                    <button className={`mt-ctl ${micMuted ? "mt-ctl-off" : ""}`} onClick={toggleMic}>
-                        {micMuted ? "Mic Off" : "Mic"}
-                    </button>
-                    <button className="mt-caret" title={micLabel}>
-                        ▾
+                    {/* Mic */}
+                    <button className={`mt-icon-btn ${micMuted ? "mt-icon-off" : ""}`} onClick={toggleMic} title={micMuted ? "Unmute" : "Mute"}>
+                        {micMuted ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17" />
+                                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                            </svg>
+                        )}
+                        <span className="mt-icon-label">{micMuted ? "Unmute" : "Mute"}</span>
                     </button>
 
-                    <button className={`mt-ctl ${camOff ? "mt-ctl-off" : ""}`} onClick={toggleCam}>
-                        {camOff ? "Video Off" : "Video"}
-                    </button>
-                    <button className="mt-caret" title={camLabel}>
-                        ▾
+                    {/* Camera */}
+                    <button className={`mt-icon-btn ${camOff ? "mt-icon-off" : ""}`} onClick={toggleCam} title={camOff ? "Turn on camera" : "Turn off camera"}>
+                        {camOff ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                                <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34" />
+                                <path d="M14.12 14.12A3 3 0 1 1 9.88 9.88" />
+                            </svg>
+                        ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                            </svg>
+                        )}
+                        <span className="mt-icon-label">{camOff ? "Start" : "Stop"}</span>
                     </button>
                 </div>
 
                 <div className="mt-mid">
-                    <button className="mt-midbtn" onClick={() => togglePanel("participants")}>
-                        Participants
+                    {/* Participants */}
+                    <button className={`mt-icon-btn ${panel === "participants" ? "mt-icon-active" : ""}`} onClick={() => togglePanel("participants")} title="Participants">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        {totalParticipants > 0 && <span className="mt-icon-badge">{totalParticipants}</span>}
+                        <span className="mt-icon-label">People</span>
                     </button>
-                    <button className="mt-midbtn" onClick={() => togglePanel("chat")}>
-                        Chat
+
+                    {/* Chat */}
+                    <button className={`mt-icon-btn ${panel === "chat" ? "mt-icon-active" : ""}`} onClick={() => togglePanel("chat")} title="Chat">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span className="mt-icon-label">Chat</span>
                     </button>
-                    <button className="mt-midbtn" onClick={() => togglePanel("notes")}>
-                        Notes
+
+                    {/* Notes */}
+                    <button className={`mt-icon-btn ${panel === "notes" ? "mt-icon-active" : ""}`} onClick={() => togglePanel("notes")} title="Notes">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        <span className="mt-icon-label">Notes</span>
                     </button>
                 </div>
 
                 <div className="mt-right">
                     <button className="mt-end" onClick={endInterview}>
-                        End Interview
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91" />
+                            <line x1="23" y1="1" x2="1" y2="23" />
+                        </svg>
+                        <span>End</span>
                     </button>
                 </div>
             </div>
@@ -589,15 +632,17 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
     );
 }
 
-/* ---------- Small UI helper ---------- */
-function ParticipantRow({ name, actions }) {
+/* ---------- Small UI helpers ---------- */
+
+function ParticipantRow({ name, status, actions }) {
     const initial = (name || "?").trim().slice(0, 1).toUpperCase();
+    const statusLabel = status === "interviewing" ? "In session" : status === "waiting" ? "In waiting room" : "Interview done";
     return (
         <div className="mt-p-row">
-            <div className="mt-avatar">{initial}</div>
+            <div className={`mt-avatar ${status === "interviewing" ? "mt-avatar-active" : ""}`}>{initial}</div>
             <div>
                 <div className="mt-p-name">{name}</div>
-                <div className="mt-p-sub"> </div>
+                <div className="mt-p-sub">{statusLabel}</div>
             </div>
             {actions}
         </div>

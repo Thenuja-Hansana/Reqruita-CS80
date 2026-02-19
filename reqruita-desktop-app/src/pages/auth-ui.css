@@ -1223,10 +1223,279 @@ body.rq-noscr {
   font-weight: 800;
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  z-index: 60;
+}
+
+
+/* ================= Icon Buttons (Toolbar) ================= */
+
+.mt-icon-btn {
+  height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 160ms ease;
+  position: relative;
+}
+
+.mt-icon-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(0, 0, 0, 0.38);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+.mt-icon-btn:active {
+  transform: translateY(0);
+}
+
+.mt-icon-btn svg {
+  flex-shrink: 0;
+}
+
+.mt-icon-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+
+/* Off state (mic muted / cam off) */
+.mt-icon-off {
+  background: rgba(127, 29, 29, 0.38);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.mt-icon-off:hover {
+  background: rgba(127, 29, 29, 0.5);
+}
+
+/* Active state (panel open, sharing active) */
+.mt-icon-active {
+  background: rgba(75, 47, 182, 0.3);
+  border-color: rgba(75, 47, 182, 0.5);
+  box-shadow: 0 0 12px rgba(75, 47, 182, 0.25);
+}
+
+.mt-icon-active:hover {
+  background: rgba(75, 47, 182, 0.4);
+}
+
+/* Badge on icon button (participant count) */
+.mt-icon-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--rq-primary), #6d5efc);
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 2px solid #0b1220;
+}
+
+/* End button with icon */
+.mt-end {
+  height: 44px;
+  border-radius: 12px;
+  padding: 0 16px;
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 12px;
+  color: white;
+  background: #b91c1c;
+  box-shadow: 0 10px 22px rgba(185, 28, 28, 0.30);
+  transition: all 160ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mt-end:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.4);
+}
+
+.mt-end:active {
+  transform: translateY(0px);
+}
+
+
+/* ================= Tile Placeholder ================= */
+
+.mt-tile-ph {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mt-tile-ph-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.mt-tile-ph-pulse {
+  animation: mt-ph-pulse 2s ease-in-out infinite;
+}
+
+@keyframes mt-ph-pulse {
+
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+.mt-tile-ph-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+
+/* ================= Share Placeholder Content ================= */
+
+.mt-ph-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.mt-ph-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.mt-ph-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.5;
+}
+
+
+/* ================= Section Badges ================= */
+
+.mt-sec-title {
+  margin: 10px 2px 8px;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mt-sec-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(75, 47, 182, 0.35);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0 6px;
+}
+
+.mt-sec-badge-amber {
+  background: rgba(245, 158, 11, 0.3);
+  color: rgba(251, 191, 36, 0.95);
+}
+
+.mt-sec-badge-green {
+  background: rgba(16, 185, 129, 0.25);
+  color: rgba(52, 211, 153, 0.95);
+}
+
+
+/* Empty state for participant sections */
+.mt-empty {
+  padding: 14px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+}
+
+
+/* Side panel entrance animation */
+.mt-side-enter {
+  animation: mt-side-slide 200ms ease-out;
+}
+
+@keyframes mt-side-slide {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+/* Active avatar indicator */
+.mt-avatar-active {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+}
+
+
+/* Green action button */
+.mt-act-green {
+  background: #10b981;
+}
+
+.mt-act-green:hover {
+  filter: brightness(1.1);
 }
 
 
 /* ================= Right Panel (Participants/Chat/Notes) ================= */
+
 
 .mt-mainrow {
   position: absolute;

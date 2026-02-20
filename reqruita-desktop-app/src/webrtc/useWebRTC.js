@@ -1,33 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
-import { BACKEND_URL, METERED_API_KEY } from "../config";
+import { BACKEND_URL } from "../config";
 
-/* ── Fallback: STUN-only (works on same LAN) ── */
-const STUN_ONLY = {
+const RTC_CONFIG = {
     iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun.l.google.com:19302" }, // ok for MVP
     ],
 };
-
-/**
- * Fetch TURN credentials from Metered.ca Open Relay (free 50 GB/mo).
- * Falls back to STUN-only if the key is missing or the fetch fails.
- */
-async function getRtcConfig() {
-    if (!METERED_API_KEY) return STUN_ONLY;
-
-    try {
-        const res = await fetch(
-            `https://reqruita.metered.live/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`
-        );
-        const iceServers = await res.json();
-        return { iceServers };
-    } catch (err) {
-        console.warn("TURN fetch failed, using STUN-only:", err);
-        return STUN_ONLY;
-    }
-}
 
 export function useWebRTC({ meetingId, role }) {
     const socketRef = useRef(null);
@@ -121,9 +100,8 @@ export function useWebRTC({ meetingId, role }) {
             const socket = io(BACKEND_URL, { transports: ["websocket"] });
             socketRef.current = socket;
 
-            // 2) peer connection (with dynamic TURN credentials)
-            const rtcConfig = await getRtcConfig();
-            const pc = new RTCPeerConnection(rtcConfig);
+            // 2) peer connection
+            const pc = new RTCPeerConnection(RTC_CONFIG);
             pcRef.current = pc;
 
             // send ICE candidates to peer

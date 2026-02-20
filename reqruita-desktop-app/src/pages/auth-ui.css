@@ -80,137 +80,194 @@ body.rq-noscr {
   overflow: hidden;
 }
 
-/* ================= Role Select ================= */
+/* ================= Role Select Premium V2 ================= */
 .rs-shell {
   height: 100%;
   width: 100%;
-  background: #fff;
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  background: #ffffff;
+  /* Pure white background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-  padding: var(--rq-safe);
-  gap: var(--rq-safe);
-}
-
-/* Left image */
-.rs-left {
+  padding: 40px;
   position: relative;
-  border-radius: 14px;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  min-height: 0;
-  /* critical: prevents grid overflow */
 }
 
-.rs-left::after {
+/* Abstract Background Glows */
+.rs-shell::before,
+.rs-shell::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: rgba(75, 47, 182, 0.55);
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 0;
+  opacity: 0.12;
+  /* Subtle glows */
 }
 
-.rs-left-content {
+.rs-shell::before {
+  top: -10%;
+  left: -10%;
+  background: var(--rq-primary);
+}
+
+.rs-shell::after {
+  bottom: -10%;
+  right: -10%;
+  background: #a78bfa;
+}
+
+.rs-container {
   position: relative;
   z-index: 1;
-  height: 100%;
-  display: flex;
-  align-items: flex-end;
-  padding: clamp(18px, 3.5vh, 40px);
-}
-
-.rs-welcome {
-  margin: 0;
-  color: #fff;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  line-height: 0.95;
-
-  /* auto-shrinks with window height */
-  font-size: clamp(28px, 5.2vh, 56px);
-}
-
-/* Right panel */
-.rs-right {
-  display: grid;
-  place-items: center;
-  min-height: 0;
-}
-
-.rs-panel {
   width: 100%;
-  max-width: 360px;
-  text-align: center;
-  padding: 10px;
-}
-
-.rs-logo {
-  width: 78px;
-  height: 78px;
-  margin: 0 auto 18px;
+  max-width: 1000px;
   display: grid;
-  place-items: center;
-}
-
-.rs-btn {
-  width: 100%;
-  height: 42px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid var(--rq-border);
-  background: #fff;
-  color: var(--rq-text);
-  transition: all 200ms ease;
-}
-
-.rs-btn-primary {
-  background: var(--rq-primary);
-  border-color: var(--rq-primary);
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(75, 47, 182, 0.22);
-}
-
-.rs-btn-primary:hover {
-  background: var(--rq-primary-hover);
-  box-shadow: 0 8px 20px rgba(75, 47, 182, 0.32);
-}
-
-.rs-btn:hover {
-  transform: translateY(-2px);
-}
-
-.rs-btn:active {
-  transform: translateY(0);
-}
-
-/* Card-style role buttons */
-.rs-btn-card {
-  height: auto;
-  padding: 14px 16px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
   align-items: center;
-  gap: 4px;
 }
 
-.rs-btn-label {
+/* Left Content - Welcome Message */
+.rs-left-premium {
+  padding: 20px;
+}
+
+.rs-brand-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(75, 47, 182, 0.08);
+  border: 1px solid rgba(75, 47, 182, 0.2);
+  color: var(--rq-primary);
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.rs-welcome-v2 {
+  font-size: 64px;
   font-weight: 800;
+  color: #1a1a2e;
+  /* Deep navy/purple gray */
+  line-height: 1.1;
+  margin: 0 0 20px 0;
+  letter-spacing: -2px;
+}
+
+.rs-welcome-v2 span {
+  background: linear-gradient(135deg, var(--rq-primary) 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.rs-desc {
+  font-size: 18px;
+  color: #64748b;
+  /* Slate gray */
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+/* Right Content - Role Options */
+.rs-options {
+  display: grid;
+  gap: 20px;
+}
+
+.rs-role-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  cursor: pointer;
+  transition: all 400ms cubic-bezier(0.23, 1, 0.32, 1);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.rs-role-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(75, 47, 182, 0.2);
+  background: #ffffff;
+  box-shadow: 0 20px 40px rgba(75, 47, 182, 0.08);
+}
+
+.rs-role-icon {
+  width: 64px;
+  height: 64px;
+  background: rgba(75, 47, 182, 0.05);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: var(--rq-primary);
+  transition: all 400ms ease;
+  border: 1px solid rgba(75, 47, 182, 0.1);
+}
+
+.rs-role-card:hover .rs-role-icon {
+  background: var(--rq-primary);
+  color: #fff;
+  transform: scale(1.1) rotate(-5deg);
+  box-shadow: 0 10px 20px rgba(75, 47, 182, 0.2);
+  border-color: transparent;
+}
+
+.rs-role-info {
+  flex: 1;
+}
+
+.rs-role-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.rs-role-sub {
   font-size: 14px;
+  color: #64748b;
+  line-height: 1.4;
 }
 
-.rs-btn-sub {
-  font-size: 11px;
-  font-weight: 500;
-  opacity: 0.7;
+.rs-role-arrow {
+  font-size: 20px;
+  color: #cbd5e1;
+  transition: all 400ms ease;
 }
 
-/* Fade-in animation */
-@keyframes rq-fade-in {
+.rs-role-card:hover .rs-role-arrow {
+  color: var(--rq-primary);
+  transform: translateX(5px);
+}
+
+/* Premium Primary Card */
+.rs-card-primary {
+  border-color: rgba(75, 47, 182, 0.1);
+}
+
+
+/* Animations */
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(30px);
   }
 
   to {
@@ -219,54 +276,66 @@ body.rq-noscr {
   }
 }
 
-.rs-fade-in {
-  animation: rq-fade-in 500ms ease both;
+.rs-animate-1 {
+  animation: slideUp 800ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
-.rs-or {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0;
-  color: var(--rq-muted);
-  font-size: 12px;
+.rs-animate-2 {
+  animation: slideUp 800ms cubic-bezier(0.23, 1, 0.32, 1) 100ms both;
 }
 
-.rs-or::before,
-.rs-or::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background: #dedede;
+.rs-animate-3 {
+  animation: slideUp 800ms cubic-bezier(0.23, 1, 0.32, 1) 200ms both;
 }
 
-/* ✅ If the WINDOW is short, switch to vertical layout (more height-friendly) */
-@media (max-height: 640px) {
-  .rs-shell {
+.rs-animate-4 {
+  animation: slideUp 800ms cubic-bezier(0.23, 1, 0.32, 1) 300ms both;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .rs-container {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+    text-align: center;
+    gap: 32px;
   }
 
-  .rs-left {
-    min-height: 220px;
+  .rs-left-premium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  .rs-panel {
-    max-width: 420px;
+  .rs-welcome-v2 {
+    font-size: 48px;
+  }
+
+  .rs-desc {
+    font-size: 16px;
   }
 }
 
-/* Also stack on narrow screens */
-@media (max-width: 860px) {
+@media (max-width: 600px) {
   .rs-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+    padding: 24px;
   }
 
-  .rs-left {
-    min-height: 260px;
+  .rs-role-card {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .rs-role-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .rs-role-title {
+    font-size: 18px;
   }
 }
+
 
 
 /* ================= Login ================= */

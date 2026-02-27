@@ -1,6 +1,8 @@
 // electron/main.cjs
-const { app, BrowserWindow, session, desktopCapturer, ipcMain, globalShortcut } = require("electron");
+const { app, BrowserWindow, session, desktopCapturer, ipcMain, globalShortcut, shell } = require("electron");
 const path = require("path");
+const fs = require("fs");
+const os = require("os");
 
 // Helps screen share during dev on http://localhost
 app.commandLine.appendSwitch("enable-usermedia-screen-capturing");
@@ -108,10 +110,52 @@ function setupEmergencyUnlockShortcut() {
     });
 }
 
+/**
+ * File Explorer IPC – lets the renderer browse the local file system
+ * and open files with the default OS application.
+ */
+function setupFileExplorerIPC() {
+    ipcMain.handle("fs:getHomeDir", () => os.homedir());
+
+    ipcMain.handle("fs:readDir", (_event, dirPath) => {
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        return entries
+            .filter((e) => !e.name.startsWith(".")) // hide dot-files
+            .map((e) => {
+                const fullPath = path.join(dirPath, e.name);
+                let size = null;
+                try {
+                    if (!e.isDirectory()) {
+                        size = fs.statSync(fullPath).size;
+                    }
+                } catch { /* ignore stat errors */ }
+                return {
+                    name: e.name,
+                    isDir: e.isDirectory(),
+                    path: fullPath,
+                    ext: e.isDirectory() ? "" : path.extname(e.name).toLowerCase(),
+                    size,
+                };
+            })
+            .sort((a, b) => {
+                if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+                return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+            });
+    });
+
+    ipcMain.handle("shell:openPath", async (_event, filePath) => {
+        const err = await shell.openPath(filePath);
+        return err || null; // empty string = success
+    });
+
+    ipcMain.handle("fs:getPathSep", () => path.sep);
+}
+
 app.whenReady().then(() => {
     setupDisplayMediaHandler();
     createWindow();
     setupInterviewModeIPC();
+    setupFileExplorerIPC();
     setupEmergencyUnlockShortcut();
 
     app.on("activate", () => {

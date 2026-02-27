@@ -12,4 +12,10 @@ contextBridge.exposeInMainWorld("reqruita", {
     // Interview mode (fullscreen/kiosk lock)
     enterInterviewMode: () => ipcRenderer.invoke("rq:enter-interview-mode"),
     exitInterviewMode: () => ipcRenderer.invoke("rq:exit-interview-mode"),
+
+    // File Explorer – browse local file system and open files
+    getHomeDir: () => ipcRenderer.invoke("fs:getHomeDir"),
+    readDir: (dirPath) => ipcRenderer.invoke("fs:readDir", dirPath),
+    openFile: (filePath) => ipcRenderer.invoke("shell:openPath", filePath),
+    getPathSep: () => ipcRenderer.invoke("fs:getPathSep"),
 });

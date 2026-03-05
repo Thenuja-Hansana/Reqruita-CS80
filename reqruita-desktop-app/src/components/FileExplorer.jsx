@@ -111,6 +111,7 @@ export default function FileExplorer({ onClose }) {
     const [sep, setSep] = useState("\\");
     const [openingFile, setOpeningFile] = useState(null); // file currently being opened
     const openingRef = useRef(false); // synchronous guard against double-click
+    const [imagePreview, setImagePreview] = useState(null); // { src, name } for inline image viewer
 
     const currentPath = pathStack[pathStack.length - 1] || "";
 
@@ -174,6 +175,8 @@ export default function FileExplorer({ onClose }) {
         setPathStack((s) => (s.length > 0 ? [s[0]] : s));
     }
 
+    const IMAGE_EXTS = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".svg", ".ico"];
+
     async function handleEntryClick(entry) {
         if (entry.isDir) {
             navigateTo(entry.path);
@@ -183,7 +186,13 @@ export default function FileExplorer({ onClose }) {
             openingRef.current = true;
             setOpeningFile(entry.name);
             try {
-                await window.reqruita.openFile(entry.path);
+                if (IMAGE_EXTS.includes(entry.ext)) {
+                    // Show image inline so it appears inside the app
+                    const src = await window.reqruita.readFileBase64(entry.path);
+                    setImagePreview({ src, name: entry.name });
+                } else {
+                    await window.reqruita.openFile(entry.path);
+                }
             } catch (e) {
                 setError(`Could not open file: ${e?.message || e}`);
             } finally {
@@ -312,6 +321,34 @@ export default function FileExplorer({ onClose }) {
                     </div>
                 )}
             </div>
+
+            {/* Inline image preview overlay */}
+            {imagePreview && (
+                <div className="fe-img-overlay" onClick={() => setImagePreview(null)}>
+                    <div className="fe-img-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="fe-img-topbar">
+                            <span className="fe-img-name">{imagePreview.name}</span>
+                            <button
+                                className="jm-google-close"
+                                onClick={() => setImagePreview(null)}
+                                title="Close preview"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="fe-img-body">
+                            <img
+                                src={imagePreview.src}
+                                alt={imagePreview.name}
+                                className="fe-img-el"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

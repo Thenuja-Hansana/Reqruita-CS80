@@ -144,8 +144,32 @@ function setupFileExplorerIPC() {
     });
 
     ipcMain.handle("shell:openPath", async (_event, filePath) => {
+        // Temporarily suspend always-on-top so the launched app can surface
+        const wasOnTop = win?.isAlwaysOnTop() ?? false;
+        if (wasOnTop) win.setAlwaysOnTop(false);
+
         const err = await shell.openPath(filePath);
+
+        // Restore after a short delay (gives the OS time to raise the new window)
+        setTimeout(() => {
+            if (wasOnTop && win && !win.isDestroyed()) {
+                win.setAlwaysOnTop(true, "screen-saver");
+            }
+        }, 2000);
+
         return err || null; // empty string = success
+    });
+
+    ipcMain.handle("fs:readFileBase64", (_event, filePath) => {
+        const ext = path.extname(filePath).toLowerCase().replace(".", "");
+        const mimeMap = {
+            jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+            gif: "image/gif", bmp: "image/bmp", webp: "image/webp",
+            svg: "image/svg+xml", ico: "image/x-icon",
+        };
+        const mime = mimeMap[ext] || "application/octet-stream";
+        const data = fs.readFileSync(filePath);
+        return `data:${mime};base64,${data.toString("base64")}`;
     });
 
     ipcMain.handle("fs:getPathSep", () => path.sep);

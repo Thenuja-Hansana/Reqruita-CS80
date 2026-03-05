@@ -18,4 +18,5 @@ contextBridge.exposeInMainWorld("reqruita", {
     readDir: (dirPath) => ipcRenderer.invoke("fs:readDir", dirPath),
     openFile: (filePath) => ipcRenderer.invoke("shell:openPath", filePath),
     getPathSep: () => ipcRenderer.invoke("fs:getPathSep"),
+    readFileBase64: (filePath) => ipcRenderer.invoke("fs:readFileBase64", filePath),
 });

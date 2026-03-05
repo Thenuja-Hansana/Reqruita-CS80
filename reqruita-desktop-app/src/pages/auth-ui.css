@@ -2647,3 +2647,78 @@ body.rq-noscr {
   border-color: rgba(16, 185, 129, 0.6);
   color: #6ee7b7;
 }
+
+/* ═══════════════════════════════════════════════════════
+   File Explorer – Inline Image Preview
+   ═══════════════════════════════════════════════════════ */
+
+/* Full-shell overlay that sits on top of the file list */
+.fe-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+/* The white-ish card holding the image */
+.fe-img-box {
+  width: 100%;
+  height: 100%;
+  max-width: 900px;
+  max-height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0d1526;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* Top bar with filename + close button */
+.fe-img-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.fe-img-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Image area */
+.fe-img-body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-conic-gradient(rgba(255,255,255,0.04) 0% 25%, transparent 0% 50%)
+    0 0 / 20px 20px;
+  min-height: 0;
+}
+
+.fe-img-el {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}

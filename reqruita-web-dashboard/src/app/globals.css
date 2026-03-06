@@ -1,14 +1,119 @@
 @import "tailwindcss";
 
+/* Reqruita Brand Colors & Custom Styling */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
-@theme inline {
+@theme {
+  --color-reqruita-purple: #5D20B3;
+  --color-reqruita-purple-light: #6B2FC4;
+  --color-reqruita-purple-dark: #4A1A90;
+  --color-reqruita-light: #F3F4F6;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins);
+
+}
+
+/* Custom Scrollbar Styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #5D20B3 #f1f1f1;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #5D20B3, #7940D5);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #4A1A90, #5D20B3);
+}
+
+/* Smooth Transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Focus Styles */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(93, 32, 179, 0.1);
+}
+
+/* Modern Card Shadow */
+.card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(93, 32, 179, 0.1), 0 2px 4px -1px rgba(93, 32, 179, 0.06);
+}
+
+.card-shadow:hover {
+  box-shadow: 0 10px 15px -3px rgba(93, 32, 179, 0.15), 0 4px 6px -2px rgba(93, 32, 179, 0.1);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #5D20B3 0%, #7940D5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Smooth Page Transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+main > div {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Modern Button Styles */
+.btn-primary {
+  background: linear-gradient(135deg, #5D20B3 0%, #7940D5 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(93, 32, 179, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(93, 32, 179, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Glass Effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 body {

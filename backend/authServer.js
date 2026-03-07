@@ -32,7 +32,8 @@ const User = mongoose.model('User', userSchema);
 // 1. Registration Route - Handles creating new Admin/Interviewer accounts
 app.post('/api/register', async (req, res) => {
     try {
-        const { fullName, email, password, role } = req.body;
+        const { fullName, email, password } = req.body;
+        const role = 'admin'; // Enforce admin-only registration from the landing page
 
         // check if a user with this email already exists in MongoDB
         const existingUser = await User.findOne({ email });
@@ -95,6 +96,50 @@ app.post('/api/login', async (req, res) => {
                 role: user.role
             }
         });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Middleware to authenticate JWT token
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Access Denied: No Token Provided' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Invalid Token' });
+        req.user = user;
+        next();
+    });
+};
+
+// 3. Add Interviewer Route - Admins only
+app.post('/api/add-interviewer', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Access Denied: Requires Admin Role" });
+        }
+
+        const { email, password } = req.body; // In this context, password is the passkey
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already registered" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newInterviewer = new User({
+            fullName: "Interviewer", // Default name, or can be passed if needed
+            email,
+            password: hashedPassword,
+            role: 'interviewer'
+        });
+
+        await newInterviewer.save();
+        res.status(201).json({ message: "Interviewer added successfully!" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

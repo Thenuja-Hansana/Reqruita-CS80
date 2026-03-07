@@ -1725,10 +1725,10 @@
 
                     // Role-Based Redirection with token
                     if (data.user.role === 'admin') {
-                        window.location.href = `http://localhost:3000/home?token=${data.token}`;
+                        window.location.href = `http://localhost:3000/?token=${data.token}`;
                     } else if (data.user.role === 'interviewer') {
                         alert(`Login successful! Welcome ${data.user.fullName}`);
-                        window.location.href = `http://localhost:3000/home?token=${data.token}`;
+                        window.location.href = `http://localhost:3000/?token=${data.token}`;
                     } else {
                         alert("Invalid role. Please contact support.");
                     }

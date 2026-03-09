@@ -112,7 +112,7 @@ export default function Dashboard() {
   return (
     <div className="grid grid-cols-12 gap-8">
       {/* Left Column: Stats & Tables */}
-      <div className="col-span-12 lg:col-span-8 space-y-8">
+      <div className="col-span-12 lg:col-span-15 space-y-8">
         <div>
           <p className="text-gray-500">Friday, March 2, 2026</p>
           <h1 className="text-3xl font-bold">Good day, Bob!</h1>
@@ -221,84 +221,6 @@ export default function Dashboard() {
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Right Column: Calendar & Tasks */}
-      <div className="col-span-12 lg:col-span-4 space-y-6">
-        <div
-          className="bg-[#5D20B3] rounded-2xl p-6 text-white flex justify-between items-center cursor-pointer hover:shadow-lg transition"
-          onClick={() => setShowTaskModal(true)}
-        >
-          <div>
-            <h3 className="font-bold">Create Task</h3>
-            <p className="text-xs opacity-70">Create a new task</p>
-          </div>
-          <button className="bg-white text-[#5D20B3] w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl hover:scale-110 transition">
-            +
-          </button>
-        </div>
-
-        {/* Calendar */}
-        <div className="bg-white rounded-2xl border p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold">{monthName}</h3>
-            <div className="flex gap-2">
-              <button
-                onClick={handlePrevMonth}
-                className="px-2 py-1 hover:bg-gray-100 rounded-lg transition"
-              >
-                ←
-              </button>
-              <button
-                onClick={handleNextMonth}
-                className="px-2 py-1 hover:bg-gray-100 rounded-lg transition"
-              >
-                →
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-7 gap-2 text-center text-xs">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-              <div key={d} className="text-gray-400 font-medium py-2">
-                {d}
-              </div>
-            ))}
-            {calendarDays.map((day, index) => {
-              const today = new Date();
-              const isToday =
-                day === today.getDate() &&
-                currentDate.getMonth() === today.getMonth() &&
-                currentDate.getFullYear() === today.getFullYear();
-              return (
-                <div
-                  key={index}
-                  className={`py-2 rounded-lg transition ${
-                    day === null
-                      ? ""
-                      : isToday
-                        ? "bg-[#5D20B3] text-white font-bold cursor-pointer"
-                        : "hover:bg-purple-100 cursor-pointer font-medium"
-                  }`}
-                >
-                  {day}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Timeline Events */}
-        <div className="space-y-4">
-          <div className="bg-[#5D20B3] rounded-2xl p-4 text-white">
-            <div className="flex justify-between text-xs mb-2">
-              <span>Daily Standup Call</span>
-              <span>9:00 AM</span>
-            </div>
-            <p className="text-[10px] opacity-70">
-              Discuss team tasks for the day.
-            </p>
-          </div>
         </div>
       </div>
 

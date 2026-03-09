@@ -57,11 +57,21 @@ interface PastInterview {
   candidateName: string;
   jobPosition: string;
   interviewDate: string;
+  interviewerName: string;
   remarks: string;
   grade: "Pass" | "Fail" | "Next Stage" | "On Hold";
+  additionalNotes?: string[];
 }
 
 export default function SessionsPage() {
+  const MAX_VISIBLE_APPLIED_CANDIDATE_ROWS = 10;
+  const APPLIED_CANDIDATE_ROW_HEIGHT_PX = 56;
+  const APPLIED_CANDIDATE_HEADER_HEIGHT_PX = 48;
+  const MAX_VISIBLE_ASSIGNED_CANDIDATE_CARDS = 10;
+  const ASSIGNED_CANDIDATE_CARD_HEIGHT_PX = 176;
+  const MAX_VISIBLE_PAST_INTERVIEW_ITEMS = 10;
+  const PAST_INTERVIEW_ITEM_HEIGHT_PX = 176;
+
   // Container 1: Jobs
   const [jobs] = useState<Job[]>([
     {
@@ -230,6 +240,9 @@ export default function SessionsPage() {
       candidateEmail: "alice@example.com",
     },
   ]);
+  const [assignedInterviewFilter, setAssignedInterviewFilter] = useState<
+    "all" | "scheduled" | "unscheduled"
+  >("all");
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedAssigned, setSelectedAssigned] =
@@ -244,6 +257,7 @@ export default function SessionsPage() {
       candidateName: "Michael Davis",
       jobPosition: "Software Engineer",
       interviewDate: "Feb 25, 2026",
+      interviewerName: "Ava Thompson",
       remarks: "Good technical skills, needs improvement in communication",
       grade: "Next Stage",
     },
@@ -252,6 +266,7 @@ export default function SessionsPage() {
       candidateName: "Sarah Wilson",
       jobPosition: "Frontend Developer",
       interviewDate: "Feb 20, 2026",
+      interviewerName: "Liam Carter",
       remarks: "Excellent problem-solving skills",
       grade: "Pass",
     },
@@ -260,6 +275,7 @@ export default function SessionsPage() {
       candidateName: "Tom Hardy",
       jobPosition: "DevOps Engineer",
       interviewDate: "Feb 15, 2026",
+      interviewerName: "Noah Bennett",
       remarks: "Limited experience in cloud technologies",
       grade: "Fail",
     },
@@ -268,6 +284,7 @@ export default function SessionsPage() {
       candidateName: "Linda Chen",
       jobPosition: "Software Engineer",
       interviewDate: "Feb 18, 2026",
+      interviewerName: "Emma Foster",
       remarks: "Strong problem-solving, good communication skills",
       grade: "Pass",
     },
@@ -276,6 +293,7 @@ export default function SessionsPage() {
       candidateName: "James Wilson",
       jobPosition: "Frontend Developer",
       interviewDate: "Feb 12, 2026",
+      interviewerName: "Olivia Hayes",
       remarks: "Needs more experience with modern frameworks",
       grade: "On Hold",
     },
@@ -284,6 +302,7 @@ export default function SessionsPage() {
       candidateName: "Daniel Park",
       jobPosition: "DevOps Engineer",
       interviewDate: "Feb 8, 2026",
+      interviewerName: "Mason Reed",
       remarks: "Excellent infrastructure knowledge",
       grade: "Pass",
     },
@@ -300,10 +319,7 @@ export default function SessionsPage() {
   const [showEditInterviewModal, setShowEditInterviewModal] = useState(false);
   const [selectedInterview, setSelectedInterview] =
     useState<PastInterview | null>(null);
-  const [editRemarks, setEditRemarks] = useState("");
-  const [editGrade, setEditGrade] = useState<
-    "Pass" | "Fail" | "Next Stage" | "On Hold"
-  >("Pass");
+  const [newInterviewNote, setNewInterviewNote] = useState("");
 
   const handleAssignCandidate = (candidate: Candidate) => {
     setSelectedCandidate(candidate);
@@ -362,26 +378,35 @@ export default function SessionsPage() {
 
   const handleEditInterview = (interview: PastInterview) => {
     setSelectedInterview(interview);
-    setEditRemarks(interview.remarks);
-    setEditGrade(interview.grade);
+    setNewInterviewNote("");
     setShowEditInterviewModal(true);
   };
 
-  const handleSaveInterviewEdit = () => {
-    if (selectedInterview) {
-      setPastInterviews(
-        pastInterviews.map((interview) =>
-          interview.id === selectedInterview.id
-            ? { ...interview, remarks: editRemarks, grade: editGrade }
-            : interview,
-        ),
-      );
-      setShowEditInterviewModal(false);
-      setSelectedInterview(null);
-      alert(
-        `Interview details updated for ${selectedInterview.candidateName}!`,
-      );
+  const handleAddInterviewNote = () => {
+    if (!selectedInterview) {
+      return;
     }
+
+    const sanitizedNote = newInterviewNote.trim();
+    if (!sanitizedNote) {
+      alert("Please enter a note before adding.");
+      return;
+    }
+
+    const updatedInterview: PastInterview = {
+      ...selectedInterview,
+      additionalNotes: [...(selectedInterview.additionalNotes || []), sanitizedNote],
+    };
+
+    setPastInterviews((prev) =>
+      prev.map((interview) =>
+        interview.id === selectedInterview.id ? updatedInterview : interview,
+      ),
+    );
+
+    setSelectedInterview(updatedInterview);
+    setNewInterviewNote("");
+    alert("New note added successfully.");
   };
 
   const getJobCandidates = (jobId: string) => {
@@ -400,6 +425,22 @@ export default function SessionsPage() {
     };
     return colors[grade] || "bg-gray-100 text-gray-800";
   };
+
+  const filteredAssignedCandidates = assignedToInterviewer.filter(
+    (assigned) => {
+      const isScheduled = Boolean(assigned.interviewDate && assigned.interviewTime);
+
+      if (assignedInterviewFilter === "scheduled") {
+        return isScheduled;
+      }
+
+      if (assignedInterviewFilter === "unscheduled") {
+        return !isScheduled;
+      }
+
+      return true;
+    },
+  );
 
   return (
     <div className="space-y-8">
@@ -468,9 +509,14 @@ export default function SessionsPage() {
         </div>
 
         {/* Applied Candidates Table */}
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-auto rounded-lg"
+          style={{
+            maxHeight: `${APPLIED_CANDIDATE_HEADER_HEIGHT_PX + MAX_VISIBLE_APPLIED_CANDIDATE_ROWS * APPLIED_CANDIDATE_ROW_HEIGHT_PX}px`,
+          }}
+        >
           <table className="w-full text-left text-sm">
-            <thead>
+            <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b text-gray-600">
                 <th className="py-3 font-medium">Name</th>
                 <th className="py-3 font-medium">Email</th>
@@ -481,7 +527,7 @@ export default function SessionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {getFilteredCandidates().map((candidate) => (
+              {filteredCandidates.map((candidate) => (
                 <tr key={candidate.id} className="hover:bg-gray-50">
                   <td className="py-4 font-medium">{candidate.name}</td>
                   <td className="py-4 text-gray-600">{candidate.email}</td>
@@ -503,7 +549,7 @@ export default function SessionsPage() {
               ))}
             </tbody>
           </table>
-          {getFilteredCandidates().length === 0 && (
+          {filteredCandidates.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               No candidates found for the selected filters.
             </div>
@@ -516,9 +562,14 @@ export default function SessionsPage() {
         <h2 className="text-xl font-bold mb-6">
           Applied Candidates (Admin Assignment)
         </h2>
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-auto rounded-lg"
+          style={{
+            maxHeight: `${APPLIED_CANDIDATE_HEADER_HEIGHT_PX + MAX_VISIBLE_APPLIED_CANDIDATE_ROWS * APPLIED_CANDIDATE_ROW_HEIGHT_PX}px`,
+          }}
+        >
           <table className="w-full text-left text-sm">
-            <thead>
+            <thead className="sticky top-0 bg-white z-10">
               <tr className="border-b text-gray-600">
                 <th className="py-3 font-medium">Name</th>
                 <th className="py-3 font-medium">Position</th>
@@ -559,11 +610,36 @@ export default function SessionsPage() {
 
       {/* CONTAINER 3: Assigned to Interviewer - Schedule Interviews */}
       <div className="bg-white rounded-2xl border p-6">
-        <h2 className="text-xl font-bold mb-6">
-          Assigned Candidates (Interviewer View)
-        </h2>
-        <div className="space-y-4">
-          {assignedToInterviewer.map((assigned) => (
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <h2 className="text-xl font-bold">
+            Assigned Candidates (Interviewer View)
+          </h2>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">
+              Interview Status:
+            </label>
+            <select
+              value={assignedInterviewFilter}
+              onChange={(e) =>
+                setAssignedInterviewFilter(
+                  e.target.value as "all" | "scheduled" | "unscheduled",
+                )
+              }
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
+            >
+              <option value="all">All</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="unscheduled">Unscheduled</option>
+            </select>
+          </div>
+        </div>
+        <div
+          className="space-y-4 overflow-y-auto pr-1"
+          style={{
+            maxHeight: `${MAX_VISIBLE_ASSIGNED_CANDIDATE_CARDS * ASSIGNED_CANDIDATE_CARD_HEIGHT_PX}px`,
+          }}
+        >
+          {filteredAssignedCandidates.map((assigned) => (
             <div
               key={assigned.id}
               className="border rounded-lg p-4 hover:bg-gray-50"
@@ -624,7 +700,7 @@ export default function SessionsPage() {
                   }
                   className="border border-[#5D20B3] text-[#5D20B3] px-4 py-2 rounded text-xs hover:bg-[#5D20B3]/10"
                 >
-                  Send Email Invite
+                  Start Interview 
                 </button>
                 <button
                   onClick={() =>
@@ -639,6 +715,11 @@ export default function SessionsPage() {
               </div>
             </div>
           ))}
+          {filteredAssignedCandidates.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              No candidates found for the selected interview status.
+            </div>
+          )}
         </div>
       </div>
 
@@ -705,7 +786,12 @@ export default function SessionsPage() {
         </div>
 
         {/* Past Interviews List */}
-        <div className="space-y-3">
+        <div
+          className="space-y-3 overflow-y-auto pr-1"
+          style={{
+            maxHeight: `${MAX_VISIBLE_PAST_INTERVIEW_ITEMS * PAST_INTERVIEW_ITEM_HEIGHT_PX}px`,
+          }}
+        >
           {getFilteredPastInterviews().map((interview) => (
             <div
               key={interview.id}
@@ -719,6 +805,9 @@ export default function SessionsPage() {
                   </p>
                   <p className="text-gray-600 text-xs mt-1">
                     Interviewed on {interview.interviewDate}
+                  </p>
+                  <p className="text-gray-600 text-xs mt-1">
+                    Interviewer: {interview.interviewerName}
                   </p>
                 </div>
                 <span
@@ -736,7 +825,7 @@ export default function SessionsPage() {
                   onClick={() => handleEditInterview(interview)}
                   className="bg-[#5D20B3] text-white px-4 py-2 rounded text-xs hover:bg-[#4a1a8a]"
                 >
-                  View Details & Edit
+                  View Details
                 </button>
               </div>
             </div>
@@ -771,7 +860,7 @@ export default function SessionsPage() {
                   type="text"
                   value={assignInterviewer}
                   onChange={(e) => setAssignInterviewer(e.target.value)}
-                  placeholder="Interviewer name"
+                  placeholder="Interviewer Email"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
                 />
               </div>
@@ -895,7 +984,11 @@ export default function SessionsPage() {
       {showEditInterviewModal && selectedInterview && (
         <div
           className="fixed inset-0 bg-black/10 flex items-center justify-center z-50"
-          onClick={() => setShowEditInterviewModal(false)}
+          onClick={() => {
+            setShowEditInterviewModal(false);
+            setSelectedInterview(null);
+            setNewInterviewNote("");
+          }}
         >
           <div
             className="bg-white rounded-xl p-6 w-full max-w-lg"
@@ -927,49 +1020,73 @@ export default function SessionsPage() {
                 </p>
                 <p className="text-sm">{selectedInterview.interviewDate}</p>
               </div>
+              <div>
+                <p className="text-xs text-gray-600 font-medium">Interviewer</p>
+                <p className="text-sm">{selectedInterview.interviewerName}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 font-medium">
+                  Interview Result
+                </p>
+                <span
+                  className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium ${getGradeColor(selectedInterview.grade)}`}
+                >
+                  {selectedInterview.grade}
+                </span>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 font-medium">Remarks</p>
+                <p className="text-sm">{selectedInterview.remarks}</p>
+              </div>
             </div>
 
-            {/* Editable Fields */}
+            {/* Add Extra Notes */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Interview Result
-                </label>
-                <select
-                  value={editGrade}
-                  onChange={(e) => setEditGrade(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
-                >
-                  <option value="Pass">Pass</option>
-                  <option value="Fail">Fail</option>
-                  <option value="Next Stage">Next Stage</option>
-                  <option value="On Hold">On Hold</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Remarks
+                  Add Extra Note
                 </label>
                 <textarea
-                  value={editRemarks}
-                  onChange={(e) => setEditRemarks(e.target.value)}
-                  placeholder="Add or update interview remarks..."
-                  rows={5}
+                  value={newInterviewNote}
+                  onChange={(e) => setNewInterviewNote(e.target.value)}
+                  placeholder="Add any extra interviewer note here..."
+                  rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
                 />
               </div>
+
+              {selectedInterview.additionalNotes &&
+                selectedInterview.additionalNotes.length > 0 && (
+                  <div className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Additional Notes
+                    </p>
+                    <div className="space-y-2">
+                      {selectedInterview.additionalNotes.map((note, index) => (
+                        <p key={index} className="text-sm text-gray-700">
+                          {index + 1}. {note}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               <div className="flex gap-3 mt-6">
                 <button
-                  onClick={handleSaveInterviewEdit}
+                  onClick={handleAddInterviewNote}
                   className="flex-1 bg-[#5D20B3] text-white px-4 py-2 rounded-lg hover:bg-[#4a1a8a]"
                 >
-                  Save Changes
+                  Add Note
                 </button>
                 <button
-                  onClick={() => setShowEditInterviewModal(false)}
+                  onClick={() => {
+                    setShowEditInterviewModal(false);
+                    setSelectedInterview(null);
+                    setNewInterviewNote("");
+                  }}
                   className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  Close
                 </button>
               </div>
             </div>

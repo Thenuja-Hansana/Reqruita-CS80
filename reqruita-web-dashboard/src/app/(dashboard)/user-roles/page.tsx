@@ -35,21 +35,21 @@ export default function UserRolesPage() {
       id: 3,
       name: "Mike Johnson",
       email: "mike.johnson@company.com",
-      role: "Recruiter",
+      role: "Interviewer",
       status: "Active",
     },
     {
       id: 4,
       name: "Sarah Williams",
       email: "sarah.williams@company.com",
-      role: "HR Manager",
+      role: "Admin",
       status: "Active",
     },
     {
       id: 5,
       name: "Tom Brown",
       email: "tom.brown@company.com",
-      role: "Candidate",
+      role: "Interviewer",
       status: "Inactive",
     },
   ]);
@@ -71,9 +71,6 @@ export default function UserRolesPage() {
   const roles: Role[] = [
     { name: "Admin", permission: "Full Access" },
     { name: "Interviewer", permission: "Interview & Feedback" },
-    { name: "Recruiter", permission: "Job Posting & Candidate Management" },
-    { name: "HR Manager", permission: "Reports & Settings" },
-    { name: "Candidate", permission: "View & Apply" },
   ];
 
   const handleAddUser = () => {
@@ -207,22 +204,6 @@ export default function UserRolesPage() {
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Roles Configuration */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {roles.map((role) => (
-          <div key={role.name} className="bg-white rounded-2xl border p-6">
-            <h3 className="font-bold text-lg mb-2">{role.name}</h3>
-            <p className="text-gray-600 text-sm mb-4">{role.permission}</p>
-            <button
-              onClick={() => handleConfigurePermissions(role)}
-              className="text-[#5D20B3] text-sm font-medium hover:underline"
-            >
-              Configure Permissions →
-            </button>
-          </div>
-        ))}
       </div>
 
       {/* Add User Modal */}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 const PRICE_PER_ADMIN = 75;
 const PRICE_PER_INTERVIEWER = 45;
@@ -10,6 +10,18 @@ export default function PaymentPage() {
   const [numAdmins, setNumAdmins] = useState('');
   const [numInterviewers, setNumInterviewers] = useState('');
   const [numInterviews, setNumInterviews] = useState('');
+
+  useEffect(() => {
+    // Check for token in URL query params if redirected from landing page registration
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      // Clean up the URL securely
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -211,11 +223,10 @@ export default function PaymentPage() {
                 <button
                   type="button"
                   onClick={() => setAgreedToTerms(!agreedToTerms)}
-                  className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
-                    agreedToTerms
+                  className={`w-[18px] h-[18px] rounded-[5px] flex items-center justify-center flex-shrink-0 transition-all duration-200 ${agreedToTerms
                       ? 'bg-gradient-to-br from-purple-600 to-indigo-600 shadow-sm shadow-purple-500/30'
                       : 'border-[1.5px] border-gray-300 bg-white hover:border-purple-400'
-                  }`}
+                    }`}
                 >
                   {agreedToTerms && (
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
@@ -239,11 +250,10 @@ export default function PaymentPage() {
               <button
                 type="submit"
                 disabled={!agreedToTerms || isProcessing}
-                className={`w-full py-3.5 rounded-xl font-semibold text-[15px] transition-all duration-300 flex items-center justify-center gap-2.5 active:scale-[0.98] ${
-                  agreedToTerms && !isProcessing
+                className={`w-full py-3.5 rounded-xl font-semibold text-[15px] transition-all duration-300 flex items-center justify-center gap-2.5 active:scale-[0.98] ${agreedToTerms && !isProcessing
                     ? 'bg-gradient-to-r from-purple-600 via-purple-600 to-indigo-600 hover:from-purple-700 hover:via-purple-700 hover:to-indigo-700 text-white shadow-lg shadow-purple-600/25 hover:shadow-xl hover:shadow-purple-600/30 cursor-pointer'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                }`}
+                  }`}
               >
                 {isProcessing ? (
                   <>
@@ -317,13 +327,12 @@ export default function PaymentPage() {
                   onChange={(e) => { setCouponCode(e.target.value); setCouponError(''); }}
                   placeholder="Coupon code"
                   disabled={couponApplied}
-                  className={`w-full py-3 pl-10 pr-4 border rounded-full bg-white outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-all duration-200 ${
-                    couponApplied
+                  className={`w-full py-3 pl-10 pr-4 border rounded-full bg-white outline-none text-sm text-gray-900 placeholder:text-gray-400 transition-all duration-200 ${couponApplied
                       ? 'border-green-300 bg-green-50/50 text-green-700'
                       : couponError
                         ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100'
                         : 'border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 hover:border-purple-200'
-                  }`}
+                    }`}
                 />
               </div>
               {couponApplied ? (

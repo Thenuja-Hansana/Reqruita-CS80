@@ -10,8 +10,10 @@ app.use(cors());
 
 console.log("Starting Auth Server...");
 
-const MONGO_URI = "mongodb+srv://ishanmalindhaims_db_user:Palaya610%40@cluster0.yebywof.mongodb.net/reqruita?retryWrites=true&w=majority&appName=Cluster0";
-const JWT_SECRET = "your_super_secret_key_here"; // In a real app, use an environment variable
+require('dotenv').config();
+
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log(" Connected to MongoDB Atlas"))
@@ -22,7 +24,8 @@ const userSchema = new mongoose.Schema({
     fullName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'interviewer'], required: true }
+    visiblePassword: { type: String }, // Stored purely for admin dashboard visibility at creation
+    role: { type: String, enum: ['admin', 'interviewer', 'recruiter', 'hr manager', 'candidate'], required: true }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
@@ -32,7 +35,8 @@ const User = mongoose.model('User', userSchema);
 // 1. Registration Route - Handles creating new Admin/Interviewer accounts
 app.post('/api/register', async (req, res) => {
     try {
-        const { fullName, email, password, role } = req.body;
+        const { fullName, email, password } = req.body;
+        const role = 'admin'; // Enforce admin-only registration from the landing page
 
         // check if a user with this email already exists in MongoDB
         const existingUser = await User.findOne({ email });
@@ -54,7 +58,23 @@ app.post('/api/register', async (req, res) => {
 
         // Save the user to the MongoDB collection
         await newUser.save();
-        res.status(201).json({ message: "Account created successfully!" });
+
+        // Create a JWT Token to auto-login the new user
+        const token = jwt.sign(
+            { id: newUser._id, role: newUser.role },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            message: "Account created successfully!",
+            token,
+            user: {
+                id: newUser._id,
+                fullName: newUser.fullName,
+                role: newUser.role
+            }
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -99,6 +119,23 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Middleware to authenticate JWT token
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Access Denied: No Token Provided' });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: 'Invalid Token' });
+        req.user = user;
+        next();
+    });
+};
+
+// --- Dashboard Routes ---
+const usersAndRolesRouter = require('./dashboard/usersAndRoles')(User, authenticateToken);
+app.use('/api/dashboard/users', usersAndRolesRouter);
 
 // --- Start Server ---
 const PORT = 3003;

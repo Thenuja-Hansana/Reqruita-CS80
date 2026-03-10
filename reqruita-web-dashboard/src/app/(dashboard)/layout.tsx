@@ -195,8 +195,20 @@ export default function DashboardLayout({
     return pathname.startsWith(href);
   };
 
+  useEffect(() => {
+    // Check for token in URL query params if redirected from landing page
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      // Clean up the URL securely
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
   return (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex h-screen overflow-hidden">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 flex h-screen overflow-hidden">
         {/* Sidebar */}
         <aside className="w-72 bg-gradient-to-b from-[#5D20B3] via-[#6B2FC4] to-[#7940D5] text-white hidden md:flex flex-col shadow-2xl relative overflow-hidden">
           {/* Decorative background pattern */}
@@ -205,37 +217,36 @@ export default function DashboardLayout({
             <div className="absolute bottom-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl translate-x-32 translate-y-32"></div>
           </div>
 
-          {/* Logo Section */}
-          <div className="relative z-10 p-6 pb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-white w-[52px] h-[52px] rounded-xl shadow-lg flex items-center justify-center">
-                <Image
-                  src="/ReqruitaLogo.png"
-                  alt="Reqruita Logo"
-                  width={50}
-                  height={50}
-                  className="object-contain"
-                />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Reqruita</h1>
-                <p className="text-xs text-purple-200">Dashboard v2.0</p>
-              </div>
+        {/* Logo Section */}
+        <div className="relative z-10 p-6 pb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white w-[52px] h-[52px] rounded-xl shadow-lg flex items-center justify-center">
+              <Image
+                src="/ReqruitaLogo.png"
+                alt="Reqruita Logo"
+                width={50}
+                height={50}
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Reqruita</h1>
+              <p className="text-xs text-purple-200">Dashboard v2.0</p>
             </div>
           </div>
+        </div>
 
-          {/* Navigation */}
-          <nav className="relative z-10 flex-1 px-4 py-2 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`group w-full flex items-center gap-3 text-left py-3.5 px-4 rounded-xl transition-all duration-200 ${
-                  isActive(item.href)
-                    ? "bg-white text-[#5D20B3] font-semibold shadow-lg transform scale-[1.02]"
-                    : "text-white/90 hover:bg-white/15 hover:text-white hover:translate-x-1"
-                }`}
-              >
+        {/* Navigation */}
+        <nav className="relative z-10 flex-1 px-4 py-2 space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`group w - full flex items - center gap - 3 text - left py - 3.5 px - 4 rounded - xl transition - all duration - 200 ${isActive(item.href)
+                  ? "bg-white text-[#5D20B3] font-semibold shadow-lg transform scale-[1.02]"
+                  : "text-white/90 hover:bg-white/15 hover:text-white hover:translate-x-1"
+                } `}
+            >
                 <span
                   className={`transition-transform duration-200 ${isActive(item.href) ? "" : "group-hover:scale-110"}`}
                 >

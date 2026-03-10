@@ -1,22 +1,9 @@
 "use client";
 
-import { useState } from "react";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: "Active" | "Inactive";
-}
-
-interface Role {
-  name: string;
-  permission: string;
-}
+import { useState, useEffect } from "react";
 
 export default function UserRolesPage() {
-  const [users, setUsers] = useState<User[]>([
+  const [users, setUsers] = useState<any[]>([
     {
       id: 1,
       name: "John Smith",
@@ -54,86 +41,107 @@ export default function UserRolesPage() {
     },
   ]);
 
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [showEditUserModal, setShowEditUserModal] = useState(false);
-  const [showRemoveModal, setShowRemoveModal] = useState(false);
-  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Form State
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("interviewer");
 
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState("Interviewer");
-  const [editUserName, setEditUserName] = useState("");
-  const [editUserEmail, setEditUserEmail] = useState("");
-  const [editUserRole, setEditUserRole] = useState("");
+  // Status State
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const roles: Role[] = [
-    { name: "Admin", permission: "Full Access" },
-    { name: "Interviewer", permission: "Interview & Feedback" },
-  ];
+  // Fetch Users on Load
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const handleAddUser = () => {
-    if (newUserName.trim() && newUserEmail.trim()) {
-      const newUser: User = {
-        id: users.length + 1,
-        name: newUserName,
-        email: newUserEmail,
-        role: newUserRole,
-        status: "Active",
-      };
-      setUsers([...users, newUser]);
-      setNewUserName("");
-      setNewUserEmail("");
-      setNewUserRole("Interviewer");
-      setShowAddUserModal(false);
-      alert("User added successfully!");
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch("http://localhost:3003/api/dashboard/users", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEditClick = (user: User) => {
-    setSelectedUser(user);
-    setEditUserName(user.name);
-    setEditUserEmail(user.email);
-    setEditUserRole(user.role);
-    setShowEditUserModal(true);
-  };
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  const handleSaveEdit = () => {
-    if (selectedUser && editUserName.trim() && editUserEmail.trim()) {
-      setUsers(
-        users.map((u) =>
-          u.id === selectedUser.id
-            ? {
-                ...u,
-                name: editUserName,
-                email: editUserEmail,
-                role: editUserRole,
-              }
-            : u,
-        ),
-      );
-      setShowEditUserModal(false);
-      alert("User updated successfully!");
+    if (!email || !password || !role) {
+      setError("Please fill all fields");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You are not authenticated.");
+        return;
+      }
+
+      const res = await fetch("http://localhost:3003/api/dashboard/users/add-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ email, password, role })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Failed to add user");
+      } else {
+        setSuccess(data.message || "User added successfully!");
+        setEmail("");
+        setPassword("");
+        setRole("interviewer");
+
+        // Refresh the table with the new user
+        fetchUsers();
+
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setSuccess("");
+        }, 2000);
+      }
+    } catch (err) {
+      setError("Server error. Please try again.");
     }
   };
 
-  const handleRemoveClick = (user: User) => {
-    setSelectedUser(user);
-    setShowRemoveModal(true);
-  };
-
-  const handleConfirmRemove = () => {
-    if (selectedUser) {
-      setUsers(users.filter((u) => u.id !== selectedUser.id));
-      setShowRemoveModal(false);
-      alert(`User ${selectedUser.name} removed successfully!`);
+  const getRoleColor = (roleStr: string) => {
+    switch (roleStr) {
+      case 'admin': return 'bg-purple-100 text-purple-800';
+      case 'interviewer': return 'bg-blue-100 text-blue-800';
+      case 'recruiter': return 'bg-orange-100 text-orange-800';
+      case 'hr manager': return 'bg-teal-100 text-teal-800';
+      case 'candidate': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const handleConfigurePermissions = (role: Role) => {
-    setSelectedRole(role);
-    setShowPermissionsModal(true);
   };
 
   return (
@@ -144,295 +152,128 @@ export default function UserRolesPage() {
       </div>
 
       {/* Users Section */}
-      <div className="bg-white rounded-2xl border p-6">
+      <div className="bg-white rounded-2xl border p-6 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">Users</h2>
           <button
-            onClick={() => setShowAddUserModal(true)}
-            className="bg-[#5D20B3] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#4a1a8a]"
-          >
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#5D20B3] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#4a1a8a] transition-colors shadow-sm">
             Add New User
           </button>
         </div>
 
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-gray-400 border-b">
-              <th className="py-3 font-medium">Name</th>
-              <th className="py-3 font-medium">Email</th>
-              <th className="py-3 font-medium">Role</th>
-              <th className="py-3 font-medium">Status</th>
-              <th className="py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="py-4">{user.name}</td>
-                <td className="py-4">{user.email}</td>
-                <td className="py-4">
-                  <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
-                    {user.role}
-                  </span>
-                </td>
-                <td className="py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.status === "Active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td className="py-4 flex gap-2">
-                  <button
-                    onClick={() => handleEditClick(user)}
-                    className="text-[#5D20B3] text-sm hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleRemoveClick(user)}
-                    className="text-red-600 text-sm hover:underline"
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">Loading users...</div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">No users found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-gray-400 border-b">
+                  <th className="py-3 font-medium">Name</th>
+                  <th className="py-3 font-medium">Email</th>
+                  <th className="py-3 font-medium">Assigned Passkey</th>
+                  <th className="py-3 font-medium">Role</th>
+                  <th className="py-3 font-medium">Status</th>
+                  <th className="py-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {users.map((user: any) => (
+                  <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-4 font-medium">{user.fullName}</td>
+                    <td className="py-4 text-gray-600">{user.email}</td>
+                    <td className="py-4 text-gray-500 font-mono text-xs">
+                      {user.visiblePassword ? user.visiblePassword : '••••••••'}
+                    </td>
+                    <td className="py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${getRoleColor(user.role)}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-4">
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                        Active
+                      </span>
+                    </td>
+                    <td className="py-4 flex gap-3">
+                      <button className="text-[#5D20B3] text-sm hover:underline font-medium">Edit</button>
+                      <button className="text-red-600 text-sm hover:underline font-medium">Remove</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add User Modal */}
-      {showAddUserModal && (
-        <div
-          className="fixed inset-0 bg-black/10 flex items-center justify-center z-50"
-          onClick={() => setShowAddUserModal(false)}
-        >
-          <div
-            className="bg-white rounded-xl p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold mb-4">Add New User</h2>
-            <div className="space-y-4">
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <h2 className="text-2xl font-bold mb-1 text-slate-800">Add New User</h2>
+            <p className="text-sm text-slate-500 mb-6">Create a new account and assign a role.</p>
+
+            {error && <div className="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200 flex items-center gap-2"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>{error}</div>}
+            {success && <div className="mb-4 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200 flex items-center gap-2"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>{success}</div>}
+
+            <form onSubmit={handleAddUser} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <input
-                  type="text"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder="User name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
                 <input
                   type="email"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="user@company.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5D20B3]/20 focus:border-[#5D20B3] outline-none transition-all"
+                  placeholder="name@company.com"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-2">Role</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Assigned Passkey</label>
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5D20B3]/20 focus:border-[#5D20B3] outline-none transition-all"
+                  placeholder="Enter a secure passkey for them"
+                />
+                <p className="text-xs text-slate-500 mt-1">This passkey will be visible on the dashboard.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Select Role</label>
                 <select
-                  value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#5D20B3]/20 focus:border-[#5D20B3] outline-none transition-all appearance-none cursor-pointer"
                 >
-                  {roles.map((role) => (
-                    <option key={role.name} value={role.name}>
-                      {role.name}
-                    </option>
-                  ))}
+                  <option value="admin">Administrator (Full Access)</option>
+                  <option value="interviewer">Interviewer (Conduct & Review)</option>
+                  <option value="recruiter">Recruiter (Post Jobs)</option>
+                  <option value="hr manager">HR Manager (Reports)</option>
+                  <option value="candidate">Candidate (Read-only)</option>
                 </select>
               </div>
-              <div className="flex gap-3 mt-6">
+
+              <div className="pt-4 flex justify-end gap-3 border-t mt-6">
                 <button
-                  onClick={handleAddUser}
-                  className="flex-1 bg-[#5D20B3] text-white px-4 py-2 rounded-lg hover:bg-[#4a1a8a]"
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => setShowAddUserModal(false)}
-                  className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
+                  type="button"
+                  onClick={() => { setIsModalOpen(false); setError(""); setSuccess(""); }}
+                  className="px-5 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-all"
                 >
                   Cancel
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit User Modal */}
-      {showEditUserModal && selectedUser && (
-        <div
-          className="fixed inset-0 bg-black/10 flex items-center justify-center z-50"
-          onClick={() => setShowEditUserModal(false)}
-        >
-          <div
-            className="bg-white rounded-xl p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold mb-4">Edit User</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <input
-                  type="text"
-                  value={editUserName}
-                  onChange={(e) => setEditUserName(e.target.value)}
-                  placeholder="User name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={editUserEmail}
-                  onChange={(e) => setEditUserEmail(e.target.value)}
-                  placeholder="user@company.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Role</label>
-                <select
-                  value={editUserRole}
-                  onChange={(e) => setEditUserRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D20B3]"
-                >
-                  {roles.map((role) => (
-                    <option key={role.name} value={role.name}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex gap-3 mt-6">
                 <button
-                  onClick={handleSaveEdit}
-                  className="flex-1 bg-[#5D20B3] text-white px-4 py-2 rounded-lg hover:bg-[#4a1a8a]"
+                  type="submit"
+                  className="px-5 py-2 bg-[#5D20B3] text-white font-medium hover:bg-[#4a1a8a] rounded-lg transition-all shadow-sm flex items-center gap-2"
                 >
-                  Save
-                </button>
-                <button
-                  onClick={() => setShowEditUserModal(false)}
-                  className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
+                  Confirm & Add
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Remove User Modal */}
-      {showRemoveModal && selectedUser && (
-        <div
-          className="fixed inset-0 bg-black/10 flex items-center justify-center z-50"
-          onClick={() => setShowRemoveModal(false)}
-        >
-          <div
-            className="bg-white rounded-xl p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold mb-4">Remove User</h2>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to remove {selectedUser.name}? This action
-              cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleConfirmRemove}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
-              >
-                Remove
-              </button>
-              <button
-                onClick={() => setShowRemoveModal(false)}
-                className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Configure Permissions Modal */}
-      {showPermissionsModal && selectedRole && (
-        <div
-          className="fixed inset-0 bg-black/10 flex items-center justify-center z-50"
-          onClick={() => setShowPermissionsModal(false)}
-        >
-          <div
-            className="bg-white rounded-xl p-6 w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold mb-4">
-              Configure {selectedRole.name} Permissions
-            </h2>
-            <div className="space-y-3 mb-6">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm font-medium">View Candidates</span>
-              </label>
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm font-medium">Schedule Interviews</span>
-              </label>
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm font-medium">View Reports</span>
-              </label>
-              <label className="flex items-center gap-3">
-                <input type="checkbox" className="w-4 h-4 rounded" />
-                <span className="text-sm font-medium">Manage Users</span>
-              </label>
-              <label className="flex items-center gap-3">
-                <input type="checkbox" className="w-4 h-4 rounded" />
-                <span className="text-sm font-medium">Edit Settings</span>
-              </label>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  alert(`Permissions for ${selectedRole.name} updated!`);
-                  setShowPermissionsModal(false);
-                }}
-                className="flex-1 bg-[#5D20B3] text-white px-4 py-2 rounded-lg hover:bg-[#4a1a8a]"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setShowPermissionsModal(false)}
-                className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}

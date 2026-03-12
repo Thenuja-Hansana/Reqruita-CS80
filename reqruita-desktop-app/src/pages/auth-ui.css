@@ -2162,6 +2162,7 @@ body.rq-noscr {
 .jm-google-close {
   width: 32px;
   height: 32px;
+  padding: 0;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.08);
@@ -2307,4 +2308,658 @@ body.rq-noscr {
 .jm-sharing-active .jm-footer {
   background: rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════
+   JM Panel – dual-launch row (Google + Files)
+   ═══════════════════════════════════════════════════════ */
+.jm-launch-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 900px;
+  padding: 0 8px;
+}
+
+/* Each card takes equal space and shrinks together */
+.jm-launch-row .jm-google-launch {
+  flex: 1 1 240px;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+/* Files launch card (inherits jm-google-launch look but with different gradient) */
+.jm-files-launch {
+  flex: 1 1 240px;
+  min-width: 200px;
+  max-width: 400px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background:
+    radial-gradient(900px 600px at 20% 20%, rgba(16, 185, 129, 0.22), transparent 60%),
+    radial-gradient(900px 600px at 80% 70%, rgba(59, 130, 246, 0.18), transparent 60%),
+    #0a1222;
+  padding: 28px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.jm-files-badge {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  color: #fff;
+}
+
+.jm-files-title {
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+
+.jm-files-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.jm-files-btn {
+  margin-top: 16px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 150ms ease;
+  font-family: "Lexend", sans-serif;
+}
+
+.jm-files-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.jm-files-btn:active {
+  transform: translateY(0px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   File Explorer Component Styles
+   ═══════════════════════════════════════════════════════ */
+
+/* Outer shell – fills the jm-google container */
+.fe-shell {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #0a1222;
+}
+
+/* ── Top navigation bar ────────────────────────────────── */
+.fe-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+.fe-nav-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 140ms ease;
+  flex-shrink: 0;
+}
+
+.fe-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.fe-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Breadcrumb ─────────────────────────────────────────── */
+.fe-breadcrumb {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0px, black 6px, black calc(100% - 6px), transparent 100%);
+}
+
+.fe-bc-sep {
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+  display: block;
+}
+
+.fe-bc-part {
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Lexend", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+  flex-shrink: 0;
+}
+
+.fe-bc-part:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.fe-bc-part.fe-bc-active {
+  color: rgba(255, 255, 255, 0.92);
+  cursor: default;
+}
+
+.fe-bc-part.fe-bc-active:hover {
+  background: transparent;
+}
+
+.fe-count {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Body / file list ───────────────────────────────────── */
+.fe-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+  min-height: 0;
+}
+
+.fe-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.fe-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fe-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+/* ── Empty / loading / error state ───────────────────────── */
+.fe-state {
+  height: 100%;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.fe-state-err {
+  color: rgba(239, 68, 68, 0.8);
+}
+
+/* Spinner */
+.fe-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid rgba(255, 255, 255, 0.12);
+  border-top-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: fe-spin 700ms linear infinite;
+}
+
+@keyframes fe-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── File / folder list ───────────────────────────────────── */
+.fe-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fe-entry {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: "Lexend", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, color 120ms ease;
+  position: relative;
+}
+
+.fe-entry:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.fe-entry:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.fe-entry.fe-entry-opening {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+/* ── Icons ───────────────────────────────────────────────── */
+.fe-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.fe-icon-dir   { color: #fbbf24; }   /* amber - folders */
+.fe-icon-img   { color: #a78bfa; }   /* purple - images */
+.fe-icon-video { color: #f87171; }   /* red - video */
+.fe-icon-audio { color: #34d399; }   /* green - audio */
+.fe-icon-code  { color: #60a5fa; }   /* blue - code */
+.fe-icon-doc   { color: #f9a8d4; }   /* pink - docs */
+.fe-icon-file  { color: rgba(255,255,255,0.45); } /* grey - other */
+
+/* ── Entry name ───────────────────────────────────────────── */
+.fe-entry-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Size label ───────────────────────────────────────────── */
+.fe-entry-size {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Folder chevron ───────────────────────────────────────── */
+.fe-entry-chevron {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.25);
+  transition: color 140ms ease;
+}
+
+.fe-entry:hover .fe-entry-chevron {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Dimmed non-openable files */
+.fe-entry.fe-entry-dimmed {
+  opacity: 0.38;
+}
+
+.fe-entry.fe-entry-dimmed:hover {
+  background: transparent;
+}
+
+/* PDF badge pill on openable PDF entries */
+.fe-entry-pdf-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.18);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #f87171;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Files toolbar button active state */
+.mt-icon-btn.mt-icon-files {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.mt-icon-btn.mt-icon-files.mt-icon-active {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.6);
+  color: #6ee7b7;
+}
+
+/* ═══════════════════════════════════════════════════════
+   File Explorer – Inline Image Preview
+   ═══════════════════════════════════════════════════════ */
+
+/* Full-shell overlay that sits on top of the file list */
+.fe-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+/* The white-ish card holding the image */
+.fe-img-box {
+  width: 100%;
+  height: 100%;
+  max-width: 900px;
+  max-height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0d1526;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* Top bar with filename + close button */
+.fe-img-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.fe-img-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Image area */
+.fe-img-body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-conic-gradient(rgba(255,255,255,0.04) 0% 25%, transparent 0% 50%)
+    0 0 / 20px 20px;
+  min-height: 0;
+}
+
+.fe-img-el {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   File Explorer – Document / Code / PDF / Unsupported Viewers
+   ═══════════════════════════════════════════════════════ */
+
+/* Full-shell overlay (fills fe-shell) */
+.fe-doc-overlay {
+  position: absolute;
+  inset: 0;
+  background: #0a1222;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  z-index: 20;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+/* Card that holds the viewer */
+.fe-doc-box {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  flex-direction: column;
+  background: #080f1e;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+}
+
+/* Smaller card for the "unsupported" message */
+.fe-doc-box.fe-doc-box-sm {
+  max-width: 520px;
+  max-height: 340px;
+  margin: auto;
+  height: auto;
+}
+
+/* ── Top bar ────────────────────────────────────────────── */
+.fe-doc-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.45);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  min-height: 44px;
+  flex-wrap: wrap;
+}
+
+.fe-doc-badge {
+  flex-shrink: 0;
+}
+.fe-doc-badge-pdf  { color: #f87171; }
+.fe-doc-badge-code { color: #60a5fa; }
+
+.fe-doc-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.fe-doc-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Small action buttons (Wrap / Copy) */
+.fe-doc-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Lexend", sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 140ms ease;
+}
+
+.fe-doc-action:hover {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.9);
+}
+
+.fe-doc-action.fe-doc-action-on {
+  background: rgba(96,165,250,0.2);
+  border-color: rgba(96,165,250,0.45);
+  color: #93c5fd;
+}
+
+.fe-doc-action.fe-doc-action-copied {
+  background: rgba(52,211,153,0.2);
+  border-color: rgba(52,211,153,0.45);
+  color: #6ee7b7;
+}
+
+/* ── PDF iframe ─────────────────────────────────────────── */
+.fe-pdf-frame {
+  width: 100%;
+  flex: 1;
+  border: 0;
+  background: #fff;
+  min-height: 0;
+}
+
+/* ── Code / text viewer body ────────────────────────────── */
+.fe-code-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  background: #060d1a;
+}
+
+.fe-code-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.fe-code-body::-webkit-scrollbar-track { background: transparent; }
+.fe-code-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
+}
+
+.fe-code-pre {
+  margin: 0;
+  padding: 8px 0;
+  font-family: "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #cdd6f4;
+  white-space: pre;        /* no wrap by default */
+  tab-size: 4;
+  min-width: 100%;
+  display: inline-block;   /* makes horizontal scroll work */
+}
+
+.fe-code-pre.fe-code-wrap {
+  white-space: pre-wrap;
+  word-break: break-all;
+  display: block;
+}
+
+.fe-code-line {
+  display: flex;
+  min-height: 1.6em;
+}
+
+.fe-code-line:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.fe-code-num {
+  display: inline-block;
+  min-width: 48px;
+  padding: 0 14px 0 10px;
+  text-align: right;
+  color: rgba(255,255,255,0.22);
+  font-size: 12px;
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  margin-right: 14px;
+}
+
+.fe-code-text {
+  flex: 1;
+  padding-right: 16px;
+}
+
+/* ── Unsupported message ────────────────────────────────── */
+.fe-unsupported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 24px;
+  text-align: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.fe-unsupported-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.75);
+}
+
+.fe-unsupported-title strong {
+  color: rgba(255,255,255,0.92);
+}
+
+.fe-unsupported-sub {
+  margin: 0;
+  font-size: 12.5px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.6;
+  max-width: 380px;
 }

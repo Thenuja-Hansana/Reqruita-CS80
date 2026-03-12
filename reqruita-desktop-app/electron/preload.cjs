@@ -12,4 +12,17 @@ contextBridge.exposeInMainWorld("reqruita", {
     // Interview mode (fullscreen/kiosk lock)
     enterInterviewMode: () => ipcRenderer.invoke("rq:enter-interview-mode"),
     exitInterviewMode: () => ipcRenderer.invoke("rq:exit-interview-mode"),
+
+    // File Explorer – browse local file system and open files
+    getHomeDir: () => ipcRenderer.invoke("fs:getHomeDir"),
+    readDir: (dirPath) => ipcRenderer.invoke("fs:readDir", dirPath),
+    openFile: (filePath) => ipcRenderer.invoke("shell:openPath", filePath),
+    getPathSep: () => ipcRenderer.invoke("fs:getPathSep"),
+    readFileBase64: (filePath) => ipcRenderer.invoke("fs:readFileBase64", filePath),
+    readFileText: (filePath) => ipcRenderer.invoke("fs:readFileText", filePath),
+    // Build a reqruita-local:// URL for a local file path (no IPC needed)
+    getPDFUrl: (filePath) => {
+        const normalized = filePath.replace(/\\/g, '/');
+        return `reqruita-local:///${normalized}`;
+    },
 });

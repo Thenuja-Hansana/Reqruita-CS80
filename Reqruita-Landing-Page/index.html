@@ -1300,11 +1300,6 @@
                     <i class="fa-solid fa-user-lock"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Welcome Back</h3>
-<<<<<<< HEAD
-                <p class="text-slate-600 dark:text-slate-400 mb-8 text-sm">Sign in to your dashboard.</p>
-                
-                <div class="space-y-4 mb-6 text-left">
-=======
                 <p class="text-slate-600 dark:text-slate-400 mb-8 text-sm">Select your role to continue securely.</p>
 
                 <div class="space-y-3">
@@ -1630,7 +1625,8 @@
             }, 300);
         }
 
-        const API_BASE_URL = 'http://localhost:3001/api';
+        const API_BASE_URL = 'http://172.20.10.4:3001/api';
+        const AUTH_API_URL = 'http://172.20.10.4:3003/api';
 
         // SIGN UP HANDLER - Collects data and saves to MongoDB
         async function handleSignup() {
@@ -1663,10 +1659,10 @@
 
                     // We can optionally show the success modal for a brief moment before redirecting
                     // showSignupSuccessModal(); 
-                    // setTimeout(() => { window.location.href = "http://localhost:3000/payment"; }, 2000);
+                    // setTimeout(() => { window.location.href = "http://172.20.10.4:3000/payment"; }, 2000);
 
                     // Direct redirect with token
-                    window.location.href = `http://localhost:3000/payment?token=${data.token}`;
+                    window.location.href = `http://172.20.10.4:3000/payment?token=${data.token}`;
                 } else {
                     alert(data.message || "Registration failed.");
                 }
@@ -1704,10 +1700,10 @@
 
                     // Role-Based Redirection with token
                     if (data.user.role === 'admin') {
-                        window.location.href = `http://localhost:3000/?token=${data.token}`;
+                        window.location.href = `http://172.20.10.4:3000/?token=${data.token}`;
                     } else if (data.user.role === 'interviewer') {
                         alert(`Login successful! Welcome ${data.user.fullName}`);
-                        window.location.href = `http://localhost:3000/?token=${data.token}`;
+                        window.location.href = `http://172.20.10.4:3000/?token=${data.token}`;
                     } else {
                         alert("Invalid role. Please contact support.");
                     }

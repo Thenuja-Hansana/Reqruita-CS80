@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { getToken, removeToken, getStoredUser } from "@/lib/api";
 
 type NotificationItem = {
   id: number;
@@ -140,6 +141,8 @@ export default function DashboardLayout({
     },
   ];
 
+  const currentUser = typeof window !== "undefined" ? getStoredUser() : null;
+
   const isActive = (href: string) => {
     if (href === "/") {
       return pathname === "/" || pathname === "/dashboard";
@@ -164,23 +167,17 @@ export default function DashboardLayout({
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("authToken");
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("authToken");
+    removeToken();
     setIsProfileMenuOpen(false);
-    router.push("/signup");
+    router.push("/signin");
   };
 
+  // Auth guard — redirect to /signin if no token found
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (token) {
-      localStorage.setItem("token", token);
-      const newUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
+    if (!getToken()) {
+      router.replace("/signin");
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -311,13 +308,17 @@ export default function DashboardLayout({
                 aria-label="Open profile menu"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center font-bold text-white shadow-md">
-                  B
+                  {currentUser
+                    ? currentUser.firstName.charAt(0).toUpperCase()
+                    : "U"}
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-semibold text-gray-800">
-                    Admin User
+                    {currentUser ? currentUser.fullName : "Admin User"}
                   </p>
-                  <p className="text-xs text-gray-500">Administrator</p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {currentUser?.role ?? "Administrator"}
+                  </p>
                 </div>
                 <svg
                   className={`w-4 h-4 text-gray-400 transition-transform ${

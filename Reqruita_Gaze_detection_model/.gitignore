@@ -1,0 +1,9 @@
+# Ignore dataset
+Dataset/
+
+venv/
+__pycache__/
+*.pyc
+
+
+

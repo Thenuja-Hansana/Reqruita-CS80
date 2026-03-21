@@ -271,6 +271,7 @@ export default function MeetingInterviewee({ session, onLeave, addToast }) {
 
     // 8) Auto-start screen share on join (wait for camera stream as a readiness indicator)
     useEffect(() => {
+<<<<<<< HEAD
         if (!autoShareAttemptedRef.current && startScreenShare && localCamStream) {
             autoShareAttemptedRef.current = true;
             // Add a small delay so UI settles before the screen picker pops up
@@ -281,6 +282,51 @@ export default function MeetingInterviewee({ session, onLeave, addToast }) {
             }, 500);
         }
     }, [startScreenShare, localCamStream]);
+=======
+        const runningInDesktop = typeof window !== "undefined" && !!window.reqruita;
+        if (!runningInDesktop) return;
+        if (autoShareAttemptedRef.current) return;
+        if (!meetingId || !localCamStream) return;
+
+        autoShareAttemptedRef.current = true;
+        (async () => {
+            try {
+                await startScreenShare();
+            } catch (err) {
+                console.error("Automatic screen share failed:", err);
+                setError((prev) => prev || "Automatic screen share failed. Use Share Screen or grant permissions.");
+            }
+        })();
+}, [meetingId, localCamStream, startScreenShare]);
+
+   //Gaze tracking effect- captures frames from local camera every 2 seconds and sends to backend for gaze prediction
+    useEffect(() => {
+    if (!localCamRef.current) return;
+
+    const interval = setInterval(async () => {
+        try {
+            const base64 = captureFrame(localCamRef.current);
+
+            const res = await fetch("http://127.0.0.1:5000/predict-gaze", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ image: base64 }),
+            });
+
+            const data = await res.json();
+
+            console.log("Gaze:", data);
+
+        } catch (err) {
+            console.error("Gaze error:", err);
+        }
+    }, 2000);
+
+    return () => clearInterval(interval);
+   }, []);
+>>>>>>> 92ff7dc6d (captures frames from local camera every 2 seconds and sends to backend for gaze prediction)
 
     function toggleMic() {
         setMicMuted((v) => !v);
@@ -304,6 +350,7 @@ export default function MeetingInterviewee({ session, onLeave, addToast }) {
         }
     }
 
+<<<<<<< HEAD
     function toggleGoogle() {
         setActivePanel((prev) => prev === 'google' ? null : 'google');
     }
@@ -319,6 +366,28 @@ export default function MeetingInterviewee({ session, onLeave, addToast }) {
 
     async function handleConfirmLeave() {
         setShowLeaveConfirm(false);
+=======
+    
+    //Frame capture function
+
+    function captureFrame(video) {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0);
+
+      return canvas.toDataURL("image/jpeg");
+    }
+
+
+    function leave() {
+        if (!window.confirm("Are you sure you want to leave the interview?")) return;
+        try {
+            window.reqruita?.exitInterviewMode?.();
+        } catch (e) { }
+>>>>>>> 92ff7dc6d (captures frames from local camera every 2 seconds and sends to backend for gaze prediction)
 
         try {
             await fetch(`${BACKEND_URL}/api/participants/leave`, {

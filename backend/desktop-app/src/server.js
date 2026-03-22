@@ -13,6 +13,7 @@ const participantRoutes = require("./routes/participantRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const remarkRoutes = require("./routes/remarkRoutes");
 const authRoutes = require("./routes/authRoutes");
+const sessionFeedbackRoutes = require("./routes/sessionFeedbackRoutes");
 const { syncAuthData } = require("./services/syncService");
 
 const socketHandler = require("./sockets/socketHandler");
@@ -49,11 +50,14 @@ connectMongo().then(() => {
 });
 getDb(); // SQLite Initialization
 
-// Routing Modules
-app.use("/api/participants", participantRoutes); // Manage meeting attendees
-app.use("/api/chat", chatRoutes);                 // Message history
-app.use("/api/remarks", remarkRoutes);           // Interviewer notes
-app.use("/api/auth", authRoutes);                 // Local auth / Token verification
+
+// Routes
+app.use("/api/participants", participantRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/remarks", remarkRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/session-feedback", sessionFeedbackRoutes);
+
 
 /**
  * REAL-TIME COMMUNICATION:

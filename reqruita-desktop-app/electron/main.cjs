@@ -212,10 +212,14 @@ function setupInterviewModeIPC() {
         if (win && !win.isDestroyed()) win.close();
     });
 
-    ipcMain.handle("rq:open-feedback", (event, role) => {
+    ipcMain.handle("rq:open-feedback", (event, payload) => {
         // Mark as confirmed so main window can close without question
         isClosingConfirmed = true;
         isMeetingActive = false;
+
+        const role = typeof payload === "string" ? payload : (payload?.role || "");
+        const meetingId = typeof payload === "object" ? (payload?.meetingId || "") : "";
+        const candidateId = typeof payload === "object" ? (payload?.candidateId || "") : "";
 
         feedbackWin = new BrowserWindow({
             width: 500,
@@ -231,7 +235,13 @@ function setupInterviewModeIPC() {
         });
 
         // Load the feedback view
-        feedbackWin.loadURL(`http://localhost:5173/?view=feedback&role=${role}`);
+        const feedbackParams = new URLSearchParams({
+            view: "feedback",
+            role,
+            meetingId,
+            candidateId,
+        });
+        feedbackWin.loadURL(`http://localhost:5173/?${feedbackParams.toString()}`);
         
         // Show when ready to avoid flicker
         feedbackWin.once('ready-to-show', () => {

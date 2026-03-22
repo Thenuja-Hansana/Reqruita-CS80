@@ -38,5 +38,5 @@ contextBridge.exposeInMainWorld("reqruita", {
         return () => ipcRenderer.removeListener("rq:request-close", subscription);
     },
     confirmClose: () => ipcRenderer.send("rq:confirm-close"),
-    openFeedback: (role) => ipcRenderer.invoke("rq:open-feedback", role),
+    openFeedback: (payload) => ipcRenderer.invoke("rq:open-feedback", payload),
 });

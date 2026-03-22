@@ -358,6 +358,12 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
 
     async function handleConfirmLeave() {
         setShowLeaveConfirm(false);
+        const endedCandidateId =
+            currentCandidate?.id ||
+            interviewing[0]?.id ||
+            waiting[0]?.id ||
+            completed[completed.length - 1]?.id ||
+            "";
         
         // Mark current candidate as complete so the session is freed
         if (currentCandidate) {
@@ -379,7 +385,7 @@ export default function MeetingInterviewer({ session, onEnd, addToast }) {
             console.error("Failed to clear chat history:", e);
         }
         
-        onEnd?.();
+        onEnd?.({ meetingId, candidateId: endedCandidateId });
         
         // If window close was pending, tell Electron to actually close
         if (isClosingRequest) {
